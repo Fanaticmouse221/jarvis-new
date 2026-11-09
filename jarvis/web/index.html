@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090d">
+  <title>J.A.R.V.I.S.</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Conversations">
+      <div class="brand">
+        <span class="orb" aria-hidden="true"></span>
+        <span class="brand-name">J.A.R.V.I.S.</span>
+      </div>
+      <button class="new-chat" id="newChat" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        New conversation
+      </button>
+      <nav class="conversation-list" id="conversationList"></nav>
+      <div class="sidebar-footer" id="sidebarFooter">Phase 1 · text</div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Show conversations">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1 class="title" id="title" title="Click to rename">New conversation</h1>
+        <div class="status" id="status" role="status">
+          <span class="status-dot"></span><span class="status-text">Connecting…</span>
+        </div>
+      </header>
+
+      <section class="messages" id="messages" aria-label="Conversation"></section>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <div class="composer-box">
+          <textarea id="input" rows="1" placeholder="Message JARVIS…" aria-label="Message JARVIS"></textarea>
+          <button class="send" id="send" type="submit" aria-label="Send">
+            <svg class="icon-send" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+            <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+          </button>
+        </div>
+        <p class="hint">Enter to send · Shift+Enter for a new line</p>
+      </form>
+    </main>
+  </div>
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
