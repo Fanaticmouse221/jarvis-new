@@ -3,53 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#07090d">
-  <title>J.A.R.V.I.S.</title>
+  <meta name="theme-color" content="#070d18">
+  <meta name="jarvis-token" content="{{JARVIS_TOKEN}}">
+  <title>JARVIS</title>
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-  <div class="app" id="app">
+  <div class="app" id="app" data-view="chat">
+    <nav class="rail" aria-label="Sections">
+      <a class="rail-brand" href="#/" aria-label="JARVIS home">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" class="ring ring-outer"/>
+          <path d="M20 8.5a11.5 11.5 0 0 1 11.5 11.5" class="ring ring-arc"/>
+          <path d="M20 31.5A11.5 11.5 0 0 1 8.5 20" class="ring ring-arc"/>
+          <circle cx="20" cy="20" r="4.5" class="ring-core"/>
+        </svg>
+      </a>
+      <a class="rail-item" data-nav="chat" href="#/"><svg class="icon"><use href="/static/icons.svg#message-square"/></svg><span>Chat</span></a>
+      <a class="rail-item" data-nav="memory" href="#/memory"><svg class="icon"><use href="/static/icons.svg#brain"/></svg><span>Memory</span></a>
+      <a class="rail-item" data-nav="activity" href="#/activity"><svg class="icon"><use href="/static/icons.svg#activity"/></svg><span>Activity</span></a>
+      <a class="rail-item" data-nav="settings" href="#/settings"><svg class="icon"><use href="/static/icons.svg#settings"/></svg><span>Settings</span></a>
+      <a class="rail-status" id="railStatus" href="#/settings" title="Checking status"><span class="dot"></span></a>
+    </nav>
+
     <aside class="sidebar" id="sidebar" aria-label="Conversations">
-      <div class="brand">
-        <span class="orb" aria-hidden="true"></span>
-        <span class="brand-name">J.A.R.V.I.S.</span>
-      </div>
-      <button class="new-chat" id="newChat" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        New conversation
+      <button class="btn new-chat" id="newChat" type="button">
+        <svg class="icon"><use href="/static/icons.svg#plus"/></svg>New conversation
       </button>
-      <nav class="conversation-list" id="conversationList"></nav>
-      <div class="sidebar-footer" id="sidebarFooter">Phase 1 · text</div>
+      <label class="search">
+        <svg class="icon"><use href="/static/icons.svg#search"/></svg>
+        <input id="searchInput" type="search" placeholder="Search conversations" aria-label="Search conversations">
+      </label>
+      <div class="conversation-list" id="conversationList"></div>
     </aside>
     <div class="scrim" id="scrim" hidden></div>
 
     <main class="main">
-      <header class="topbar">
-        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Show conversations">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </button>
-        <h1 class="title" id="title" title="Click to rename">New conversation</h1>
-        <div class="status" id="status" role="status">
-          <span class="status-dot"></span><span class="status-text">Connecting…</span>
-        </div>
-      </header>
-
-      <section class="messages" id="messages" aria-label="Conversation"></section>
-
-      <form class="composer" id="composer" autocomplete="off">
-        <div class="composer-box">
-          <textarea id="input" rows="1" placeholder="Message JARVIS…" aria-label="Message JARVIS"></textarea>
-          <button class="send" id="send" type="submit" aria-label="Send">
-            <svg class="icon-send" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
-            <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+      <section class="view view-chat" id="viewChat">
+        <header class="topbar">
+          <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Show conversations">
+            <svg class="icon"><use href="/static/icons.svg#menu"/></svg>
           </button>
-        </div>
-        <p class="hint">Enter to send · Shift+Enter for a new line</p>
-      </form>
+          <h1 class="title" id="title">New conversation</h1>
+          <div class="topbar-actions">
+            <select id="modelSelect" class="select quiet" aria-label="Model" hidden></select>
+            <button class="icon-btn" id="exportBtn" type="button" aria-label="Export this conversation" title="Export this conversation" hidden>
+              <svg class="icon"><use href="/static/icons.svg#download"/></svg>
+            </button>
+          </div>
+        </header>
+        <div class="thread" id="thread" aria-label="Conversation"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <div class="composer-box">
+            <textarea id="input" rows="1" placeholder="Message JARVIS" aria-label="Message JARVIS"></textarea>
+            <button class="send" id="send" type="submit" aria-label="Send">
+              <svg class="icon icon-send"><use href="/static/icons.svg#arrow-up"/></svg>
+              <svg class="icon icon-stop"><use href="/static/icons.svg#square"/></svg>
+            </button>
+          </div>
+        </form>
+      </section>
+      <section class="view view-page" id="viewPage" hidden></section>
     </main>
   </div>
-  <div class="sr-only" id="announcer" aria-live="polite"></div>
-  <script type="module" src="/static/app.js"></script>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <dialog class="dialog" id="dialog"></dialog>
+
+  <script src="/static/vendor/marked.umd.js"></script>
+  <script src="/static/vendor/purify.min.js"></script>
+  <script src="/static/vendor/katex/katex.min.js"></script>
+  <script src="/static/vendor/highlight.min.js"></script>
+  <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

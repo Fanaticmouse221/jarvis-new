@@ -1,11 +1,50 @@
 # Changelog
 
-## 0.1.0 (2026-11-09): Phase 1, text chat foundation
-- Web chat interface with streaming replies, Markdown/code/table rendering, copy buttons and Stop
-- JARVIS persona with honest capability statement, local date and time, 12-hour times
-- Persistent conversations in SQLite (create, list, open, rename, delete) with schema migrations
-- Model layer: any OpenAI-compatible API (Groq, Gemini, OpenRouter, Ollama, custom) with ordered fallback
-- `jarvis check` command to test API keys and list available models
-- Offline `fake:demo` / `fake:echo` models
-- Windows `setup.bat`, `start.bat`, `check.bat`; uv-managed Python 3.12
-- 35 automated tests
+## 2.0.0 (2026-11-10): a mind of its own
+
+Memory and personality are the centre of this release; the agent core exists to serve them.
+
+### Memory
+- Long-term memory in the database: standing instructions, preferences, facts about you, projects, notes
+- What JARVIS knows is sent with every message (everything while it is small; pinned, relevant and recent once it grows)
+- Learns two ways: the model saves what you tell it (`remember`), and a background pass notes lasting things you mention; both shown in the conversation, the latter with Undo
+- Corrections replace the old memory; near-duplicates are merged; passwords, keys and card numbers are refused
+- Memory screen: search, add, edit, pin, delete, export, switch off, forget everything
+- Rolling summaries keep the thread of long conversations; search across all past conversations
+
+### Personality
+- Rewritten character with situational registers and original tone examples
+- Dials for manner, humour and answer length; your name and form of address; free-text instructions
+- Standing instructions learned from what you say, or added with "Teach JARVIS" on any reply
+- Time-aware greeting; offers to continue the last conversation; knows recent conversation titles
+
+### Agent and tools
+- Real tool calling: validated arguments, permissions (allowed / ask first / off), approvals in the conversation, step limit, timeouts
+- Tools: remember, recall, forget, search past conversations, open an app, open a web page, check system status
+- Every action recorded with its real outcome in an Activity log
+- Outside-content rule in place for the web and file tools to come
+
+### Models
+- Streaming tool calls, usage and rate-limit headers; rate-limited models rest while the next answers
+- Oversized requests retried with less history; optional fields a provider rejects are dropped
+- Add a key in the app: checked with the provider, saved to `.env`, models chosen from what your account offers
+- Default fallback is now `openai/gpt-oss-20b`; output capped at 2,048 tokens to fit Groq's free tier
+
+### Interface
+- Redesigned: Chat, Memory, Activity, Settings (with system status); first-run setup; own window via Edge; desktop shortcut
+- Maths (KaTeX), code highlighting, tables; regenerate, edit and resend, export, sidebar search
+- Libraries and fonts bundled locally; no CDN
+
+### Security
+- API accepts calls only from JARVIS's own page (session token, host and origin checks)
+
+### Under the hood
+- Database migrates from 0.1 in place
+- 67 automated tests; a mock provider and a 39-check browser run in `tests/e2e`
+- `update.bat`
+
+### Not in this release
+Voice, web research, file tools, reminders. See the roadmap.
+
+## 0.1.0 (2026-11-09): text chat foundation
+- Web chat with streaming replies, saved conversations, model fallback, Windows setup scripts

@@ -1,6 +1,6 @@
 """Language-model layer: swappable providers behind one interface, with fallback."""
 
-from jarvis.llm.base import ChatMessage, LLMError, LLMProvider
+from jarvis.llm.base import ChatMessage, LLMError, LLMProvider, StreamEvent, ToolCall
 from jarvis.llm.router import AllModelsFailed, ModelRouter, NoModelsAvailable, RouterEvent
 
 __all__ = [
@@ -11,4 +11,6 @@ __all__ = [
     "ModelRouter",
     "NoModelsAvailable",
     "RouterEvent",
+    "StreamEvent",
+    "ToolCall",
 ]

@@ -1,88 +1,144 @@
-# Architecture
+# Architecture (v2.0)
 
-JARVIS is a single Python process: a FastAPI server that serves the web
-interface, stores conversations in SQLite and talks to language models through a
-swappable provider layer. This is deliberately the simplest shape that can grow
-into the full system. Each future phase adds a module behind an existing seam,
-not a rewrite.
-
-## Current system (v0.1, Phase 1)
+JARVIS is one Python process. A FastAPI server serves the interface, keeps
+everything in a single SQLite file and talks to language models through a
+swappable provider layer. Between the interface and the model sits the agent,
+which gives the model a personality, a memory and tools.
 
 ```mermaid
 flowchart LR
-    UI["Web UI<br/>(browser: PC now, phone/tablet later)"] -- "REST + Server-Sent Events" --> API
-    subgraph JARVIS["JARVIS server (one Python process)"]
-        API["server.py<br/>FastAPI routes"] --> CHAT["chat.py<br/>ChatService"]
-        CHAT --> PERSONA["persona.py<br/>system prompt"]
-        CHAT --> STORE["storage.py<br/>SQLite"]
-        CHAT --> ROUTER["llm/router.py<br/>priority list + fallback"]
-        ROUTER --> P1["OpenAI-compatible provider"]
-        ROUTER --> P2["Fake provider (tests/demo)"]
+    UI["Interface (browser window)<br/>chat, memory, activity, settings"] -- "REST + event stream, session token" --> API
+    subgraph JARVIS["JARVIS server (one process)"]
+        API["server.py<br/>routes + guard"] --> AGENT["agent.py<br/>the turn loop"]
+        AGENT --> PERSONA["persona.py<br/>character + dials + standing instructions"]
+        AGENT --> MEMORY["memory.py<br/>what is known, what to include"]
+        AGENT --> TOOLS["tools/<br/>registry, permissions, handlers"]
+        AGENT --> ROUTER["llm/router.py<br/>fallback, rate limits, usage"]
+        AGENT -. "after each reply" .-> LEARNER["memory.Learner<br/>extract facts, summarise"]
+        LEARNER --> ROUTER
+        MEMORY --> STORE["storage.py"]
+        TOOLS --> STORE
+        ROUTER --> PROVIDER["llm/openai_compat.py"]
     end
     STORE --> DB[("data/jarvis.db")]
-    P1 --> GROQ["Groq (primary)"]
-    P1 -.-> OTHER["Gemini / OpenRouter / Ollama<br/>(optional)"]
+    PROVIDER --> GROQ["Groq (primary)"]
+    PROVIDER -.-> OTHER["Gemini / OpenRouter / Ollama (optional)"]
+    TOOLS --> PC["This computer<br/>apps, browser, system status"]
 ```
 
-### A chat turn, step by step
+## One turn, step by step
 
-1. The browser `POST`s `/api/chat` with the message and the conversation ID (or none for a new conversation).
-2. `ChatService.start_turn` validates the message, creates the conversation if needed and saves the user message.
-3. `build_context` assembles the system prompt (personality, capabilities, current date and time) plus the most recent history that fits `JARVIS_MAX_HISTORY_MESSAGES` and `JARVIS_MAX_CONTEXT_CHARS`.
-4. `ModelRouter` tries each configured model in order. Any failure *before the first token* (rate limit, outage, bad key, empty reply) moves on to the next model. A failure after text has started is reported instead, so replies are never spliced from two models.
-5. Tokens stream back to the browser as Server-Sent Events: `conversation`, `model`, `token`…, then `done` or `error`.
-6. The finished reply is saved along with the model that wrote it. If the user presses Stop, the partial reply is saved and marked `[Stopped]`.
+1. The interface posts the message to `/api/chat`. The reply comes back as a
+   stream of events.
+2. `Agent.build_context` assembles what the model sees:
+   - the **personality** (fixed character, the user's dials, standing instructions),
+   - **what JARVIS knows about the user** (see Memory below),
+   - a **summary** of earlier parts of this conversation that no longer fit,
+   - titles of **recent conversations**, for continuity,
+   - recent **history**, with earlier tool use replayed as real tool calls.
+3. `ModelRouter` asks the first available model. If it is rate-limited, down or
+   returns nothing, the next is tried. A request too large for the free tier is
+   retried once with less history.
+4. The model either answers or asks for tools. For each tool request the agent:
+   validates the arguments against the tool's schema; applies the user's
+   permission (allowed / ask first / off); asks for approval when required and
+   waits; runs the handler with a timeout; records the outcome in the action
+   log; and hands the real result back to the model. Then back to step 3, up to
+   the step limit.
+5. The reply is saved together with its steps, so reopening a conversation
+   shows exactly what was done.
+6. In the background, the **Learner** asks a side model whether the user said
+   anything durable, and stores it. If the conversation has outgrown its
+   history budget, it also updates the rolling summary.
 
-### Data model
+## Memory
 
-| Table | Columns |
+| Piece | Where | What it does |
+|---|---|---|
+| Store | `storage.py` (`memories` table + full-text index) | Five kinds: standing instructions, preferences, about you, projects, notes. Each records where it came from and when. |
+| Rules | `memory.Memory` | Cleans content, refuses secrets, merges near-duplicates, chooses what accompanies each reply. |
+| Selection | `Memory.context` | While everything fits in about 1,800 characters, **all of it** is sent with every message, so nothing can be missed by a poor search. Beyond that: pinned first, then full-text matches for the message, then recent basics. |
+| Told | `tools/memory_tools.py` | The model calls `remember` / `forget` / `recall` / `search_conversations` during a conversation. |
+| Learned | `memory.Learner.reflect` | After a reply, if the message looked personal, a side model extracts up to three facts or corrections as JSON. Shown in the conversation with Undo. |
+| Managed | Memory screen, `/api/memories` | Search, add, edit, pin, delete, export, switch off. |
+| Conversation memory | `conversations.summary`, messages full-text index | Rolling summary of long conversations; search across all past ones. |
+
+Standing instructions (kind `style`) are placed in the prompt ahead of the
+default behaviour, which is how "shorter answers" or "stop calling me sir"
+persist.
+
+## Personality
+
+`persona.py` is the only place the voice is defined. The prompt is built from:
+
+1. A fixed character with rules for voice and for different situations, plus a
+   handful of original example exchanges (models imitate examples far more
+   reliably than adjectives).
+2. Three dials set in Settings: manner, humour, answer length. Each maps to one
+   line of the prompt.
+3. Standing instructions from memory and the user's own free-text instructions.
+4. A capability list generated from the tools that are actually switched on,
+   so JARVIS cannot claim an ability it lacks.
+
+## Tools and permissions
+
+| Risk | Meaning | Default |
+|---|---|---|
+| read | Looks something up, changes nothing | Runs |
+| act | Small, visible, reversible | Runs, unless the user chose "ask first" or "ask before every action" |
+| sensitive | Hard to undo | Always asks; can be switched off but never set to run unasked |
+
+If a turn has read outside content (web pages, files: coming in 2.2), every
+non-read action in that turn needs approval, whatever its setting. This is the
+defence against instructions hidden in documents.
+
+Current tools: `remember`, `recall`, `forget`, `search_conversations`,
+`open_app`, `open_url`, `get_system_info`. Adding one means writing a handler
+and a `Tool(...)` entry; permissions, approvals, logging and the interface come
+for free.
+
+## Model layer
+
+- One client (`openai_compat.py`) for every OpenAI-compatible provider. It
+  assembles streamed tool calls from fragments, reads usage and rate-limit
+  headers, and drops optional fields a provider rejects.
+- The router rests a rate-limited model for the time the provider asks, uses
+  the next model meanwhile, and waits briefly only if all are resting.
+- Usage per model per day is stored, and shown in Settings with the provider's
+  own "remaining" figures.
+- When a Groq key is added, the model order is chosen from what that account
+  can actually see.
+
+## Security
+
+- Listens on `127.0.0.1` only.
+- Every `/api` call must carry a secret token that only JARVIS's own page is
+  given, must be addressed to this machine, and must not come from another
+  site's page. A web page in another tab cannot drive JARVIS.
+- API keys live only in `.env`; the interface is shown only the last four characters.
+- Model output is sanitised before display (DOMPurify); maths is rendered from
+  plain TeX after sanitising.
+- Memory refuses anything that looks like a password, key or card number.
+
+## Data model
+
+| Table | Purpose |
 |---|---|
-| `conversations` | `id` (hex UUID), `title`, `created_at`, `updated_at` (ISO-8601 UTC) |
-| `messages` | `id`, `conversation_id` (cascade delete), `role` (`user`/`assistant`), `content`, `model`, `created_at` |
+| `conversations` | title, timestamps, rolling `summary` |
+| `messages` | text, model, and `parts` (the ordered text and tool steps of a reply) |
+| `memories` | kind, content, pinned, source, usage |
+| `settings` | preferences changed in the app |
+| `tool_runs` | the action log |
+| `usage` | requests and tokens per model per day |
 
-Schema changes are numbered migrations in `storage.py`, tracked with `PRAGMA user_version`, so existing databases upgrade in place.
+Schema changes are numbered migrations (`PRAGMA user_version`); a v0.1 database
+upgrades in place.
 
-### API
+## Where the next milestones plug in
 
-| Method | Path | Purpose |
+| Milestone | Adds | Touches |
 |---|---|---|
-| GET | `/api/health` | Status, configured models, models skipped (and why) |
-| GET | `/api/conversations` | List, newest activity first |
-| GET | `/api/conversations/{id}` | One conversation and its messages |
-| PATCH | `/api/conversations/{id}` | Rename (`{"title": ...}`) |
-| DELETE | `/api/conversations/{id}` | Delete with its messages |
-| POST | `/api/chat` | Send a message; the reply streams as SSE |
-
-Interactive API docs are at `http://127.0.0.1:8000/docs` while JARVIS is running.
-
-## How the target layers map onto the code
-
-| Layer (from the project spec) | Today | Where it will grow |
-|---|---|---|
-| AI model layer | `llm/`: any OpenAI-compatible API, ordered fallback | Per-task model selection; tool-calling models |
-| Orchestration | `chat.py` | Agent loop with tools, task state, approval checkpoints (Phases 4 and 6) |
-| Memory | Conversation history (SQLite) | `memory/` module: facts, preferences, project notes, retrieval into context (Phase 3) |
-| Tools | None | `tools/` registry with permission levels, audit log (Phase 4) |
-| Voice | None | Browser microphone, then local speech-to-text and text-to-speech (Phase 2) |
-| Backend | FastAPI + SQLite | Authentication and sync for remote devices (Phase 7) |
-| Frontend | `web/`: vanilla JS, no build step | Voice controls, memory and settings pages; installable phone/tablet app (PWA) |
-| Security | Localhost-only binding; secrets in `.env` | Login, permission tiers, confirmations for risky actions |
-| Monitoring | Console logs; model shown per message | Usage and rate-limit tracking, error log page |
-
-## Design principles
-
-1. **One process, one database file** until there's a concrete reason for more.
-2. **Providers are configuration, not code.** Switching or adding a model is an edit to `.env`.
-3. **Fail loudly and helpfully.** Every error tells the user what to do next.
-4. **Honest capabilities.** The system prompt lists exactly what JARVIS can and can't do, and changes only when the code does.
-5. **Security by default.** Localhost-only, no secrets in git, approval required before anything risky (enforced from Phase 4).
-
-## Adding a model provider
-
-If the service is OpenAI-compatible (most are), add a preset in `llm/router.py`:
-
-```python
-PRESETS["newprovider"] = ProviderPreset("https://api.example.com/v1", "NEWPROVIDER_API_KEY")
-```
-
-Then add the key name to `key_names` in `config.py`, document it in `.env.example`, and use `newprovider:<model>` in `JARVIS_MODELS`.
+| 2.1 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
+| 2.2 Reach | web search, page reading, files in approved folders | new files in `tools/`; the outside-content rule already exists |
+| 2.3 Tasks | reminders and to-dos | one table, three tools, a scheduler loop |
+| 3.0 | longer multi-step work that survives restarts | task state in `agent.py` |

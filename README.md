@@ -1,121 +1,141 @@
 # J.A.R.V.I.S.
 
-**Just A Rather Very Intelligent System**: a personal AI assistant built on free tools, growing one working feature at a time.
+A personal AI assistant that knows who it works for, sounds like itself, and can
+act on your computer. Built on free tools, one working feature at a time.
 
-**Status: Phase 1 (text chat foundation) is complete.** Voice is next. See the [roadmap](docs/ROADMAP.md).
+**Version 2.0.** Memory, personality and the agent core are in. Voice and web
+research come next. [What works and how it was verified](docs/ROADMAP.md).
 
-## What works now
+## What it does
 
-- Chat with JARVIS in your browser, with replies that stream in as they're written
-- A consistent JARVIS personality: composed, precise, occasionally dry
-- Formatted replies: headings, lists, tables and code blocks with copy buttons
-- Conversations saved on your PC and kept across restarts; rename and delete them
-- Free cloud AI models with **automatic fallback** if one is busy or rate-limited
-- Layout that works on narrow windows and phones (this computer only, for now)
-- An offline demo mode for trying the interface without an API key
+- **Remembers you.** Tell it something once and it is kept: across
+  conversations, across restarts. It also notices lasting things you mention
+  and shows you what it learned, with Undo. A Memory screen lets you search,
+  edit, pin, delete and export everything it knows.
+- **Has a personality you can shape.** A composed, dry, British-butler voice by
+  default. Adjust manner, humour and answer length, or just tell it ("shorter
+  answers", "stop calling me sir") and it keeps that as a standing instruction.
+- **Acts, and tells the truth about it.** It can open apps and web pages and
+  check your computer's status. Each action appears in the conversation with
+  its real outcome, and in an Activity log. You decide what runs freely and
+  what must ask first.
+- **Handles the free tier gracefully.** Several models in rotation, automatic
+  fallback when one is rate-limited, and a status panel showing what you've
+  used today.
+- **Renders maths, code and tables** properly.
 
-## Quick start (Windows)
+Not yet: voice, web search, files, reminders, phone access. JARVIS knows this
+and says so if asked.
 
-You need **Git** and an internet connection. Everything else is installed by `setup.bat`.
+## Install (Windows)
 
-1. **Get the code.** Open PowerShell and run:
+You need **Git** and an internet connection.
+
+1. In PowerShell:
    ```powershell
    cd $HOME
    git clone https://github.com/Fanaticmouse221/jarvis.git
    cd jarvis
    ```
-   Keep it outside OneDrive, because cloud sync can corrupt the conversation database.
-2. **Run `setup.bat`** (double-click it in File Explorer). It installs
-   [uv](https://docs.astral.sh/uv/) if needed, then Python 3.12 and the dependencies
-   into a private `.venv` folder, creates your `.env` file and runs the self-tests.
-3. **Get a free Groq API key** at [console.groq.com/keys](https://console.groq.com/keys).
-   No payment method is required. Don't add one, so nothing can ever be charged.
-4. **Open `.env` in Notepad** and paste the key after `GROQ_API_KEY=`. Save.
-5. **Run `check.bat`.** Each model should report `OK`.
-6. **Run `start.bat`.** Your browser opens at <http://127.0.0.1:8000>. Close the black
-   window to shut JARVIS down.
+   Keep the folder outside OneDrive; cloud sync can corrupt the database.
+2. Double-click **`setup.bat`**. It installs [uv](https://docs.astral.sh/uv/)
+   if needed, a private copy of Python 3.12 and the dependencies, runs the
+   self-tests and puts a **JARVIS** shortcut on your desktop.
+3. Double-click **JARVIS** on the desktop (or `start.bat`). A window opens.
+4. The first screen asks for a free Groq key. Create one at
+   [console.groq.com/keys](https://console.groq.com/keys) (no payment details),
+   paste it in, and press Connect. JARVIS checks it and picks the models your
+   account can use.
 
-To try the interface without any key, set `JARVIS_MODELS=fake:demo` in `.env`.
+Already have 0.1? Double-click **`update.bat`**, then `setup.bat` once. Your
+conversations and `.env` are kept and the database upgrades itself.
 
-To update later: `git pull`, then run `setup.bat` again.
+No key yet? Choose "try the scripted demo" on the first screen. It is not an
+AI, but it lets you see the interface and the memory system working.
 
-## Configuration
+## First things to try
 
-All settings live in `.env` (see [`.env.example`](.env.example) for every option, with explanations).
+| Say | What should happen |
+|---|---|
+| "My name is … and I'm studying …" | A "Learned" note appears under the reply |
+| "Remember that I prefer …" | A "Saved to memory" step |
+| Close JARVIS, start it again, ask "What do you know about me?" | It tells you |
+| "Open Spotify" (or any installed app) | The app opens; the step says whether that was confirmed |
+| "From now on keep answers to two sentences" | Saved as a standing instruction and followed afterwards |
+| "How's my computer doing?" | Real CPU, memory, disk and battery figures |
 
-| Setting | Default | What it does |
-|---|---|---|
-| `GROQ_API_KEY` | (empty) | Key for the primary model provider |
-| `JARVIS_MODELS` | `groq:openai/gpt-oss-120b,groq:llama-3.1-8b-instant` | Models in priority order; later ones are fallbacks |
-| `JARVIS_REASONING_EFFORT` | `low` | How long gpt-oss models think: `low`, `medium` or `high` |
-| `JARVIS_USER_NAME` / `JARVIS_USER_TITLE` | (empty) / `sir` | How JARVIS addresses you |
-| `JARVIS_PORT` | `8000` | Web interface port |
-| `JARVIS_HOST` | `127.0.0.1` | Keep this: only your PC can connect |
+Then look at **Memory**, **Activity** and **Settings** in the left-hand rail.
 
-### Free model options (checked November 2026)
+## Free tier
 
-| Provider | Free tier | Card needed | Trains on your data | Role in JARVIS |
+| Provider | Free tier | Payment details | Uses your data to train | Role |
 |---|---|---|---|---|
-| **Groq** | Rate-limited per model; e.g. gpt-oss-120b: 30 requests/min, 1,000/day | No | No | **Primary** |
-| Google Gemini | Flash models, low daily caps | No | **Yes** (free tier) | Optional fallback |
-| OpenRouter | `:free` models, 50 requests/day | No | Varies by model | Optional fallback |
-| Ollama (local) | Unlimited, runs on your PC | No | Nothing leaves your PC | Optional, offline |
+| **Groq** | Per model: 30 requests/min, 1,000/day, 8,000 tokens/min, 200,000 tokens/day | Not needed | No | Primary |
+| Google Gemini | Low daily caps | Not needed | Yes, on the free tier | Optional fallback |
+| OpenRouter | 50 requests/day on free models | Not needed | Varies | Optional fallback |
+| Ollama | Unlimited, on your PC | None | Nothing leaves your PC | Optional; slow without a graphics card |
 
-Free-tier limits change often. Your provider's dashboard is the authority.
-Groq's and Google's terms require account holders to be 18 or older.
-
-**Running models locally.** On a laptop CPU with integrated graphics, local models
-work but are slow (a few words per second) and noticeably less capable than the
-cloud models above. They're best kept as an offline backup.
+Limits change. Settings shows what Groq reports as remaining, and you can set
+your own daily cap. Without payment details on your Groq account nothing can
+be charged.
 
 ## Privacy
 
-- Conversations are stored **only on your PC**, in `data/jarvis.db`.
-- Each message (with recent history) is sent to whichever cloud model answers it.
-- Groq does not train on API data. You can also enable *Zero Data Retention* in
-  Groq's console under Data Controls.
-- Google's free Gemini tier may use your prompts to improve its products. Avoid
-  sending personal information through it.
-- JARVIS only listens on `127.0.0.1`, so other devices on your network can't reach it.
+- Conversations, memories and the action log are stored only on your PC, in `data/jarvis.db`.
+- Each message is sent to the model you've chosen, together with recent history
+  and the memories relevant to it. That is how JARVIS uses what it knows.
+- JARVIS refuses to store anything that looks like a password, key or card number.
+- Only JARVIS's own window can talk to it; other web pages and other devices cannot.
+- Your API key stays in `.env` on your PC.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| `uv is not recognized` | Close the window and run `setup.bat` again (a fresh window picks up the new PATH). |
-| `check` says HTTP 401 | The API key is wrong or has a stray space. Re-copy it into `.env`. |
-| `check` says HTTP 404 | The model has been retired. `check` lists the current models; update `JARVIS_MODELS`. |
-| HTTP 429 / rate limit | Free-tier limit reached. Wait a minute, or add a fallback model. |
-| HTTP 413 / request too large | Start a new conversation, or lower `JARVIS_MAX_CONTEXT_CHARS`. |
-| Status pill says "Offline" | The server window was closed. Run `start.bat`. |
-| Port 8000 already in use | Set `JARVIS_PORT=8001` in `.env`. |
+| `uv is not recognized` | Close the window and run `setup.bat` again. |
+| "Groq rejected that key" | Copy the key again; make sure nothing is cut off. |
+| A model shows "Not ready" or fails the test | It may have been retired. In Settings > Models, remove it and add another from the list. |
+| "Rate limit reached. Resuming in N s." | Normal on the free tier. JARVIS waits or switches model by itself. |
+| "Missing or invalid session token" | Reload the window. |
+| The window didn't open | Go to <http://127.0.0.1:8000> in any browser. |
+| Port 8000 in use | Set `JARVIS_PORT=8001` in `.env`. |
+| "No installed app matches …" | Use the name as it appears in the Start menu; JARVIS suggests close matches. |
 
-## Development
+`check.bat` tests each model from the command line.
+
+## For developers
 
 ```powershell
-uv run pytest           # run the test suite
-uv run jarvis --help    # command-line options
+uv run pytest                 # 67 tests
+uv run jarvis --help
 uv run jarvis serve --port 8001 --no-browser
+python tests/e2e/run_e2e.py   # full browser run (needs Playwright and Chrome)
 ```
 
 ```
 jarvis/
 ├── jarvis/
-│   ├── cli.py            command line: serve, check
-│   ├── config.py         settings from .env
-│   ├── persona.py        JARVIS's personality (system prompt)
-│   ├── chat.py           conversation orchestration
-│   ├── storage.py        SQLite persistence with migrations
-│   ├── server.py         FastAPI: REST + streaming API, serves the web UI
-│   ├── llm/              model providers, presets and fallback router
-│   └── web/              browser interface (HTML/CSS/JS, no build step)
-├── tests/                pytest suite
-├── docs/                 architecture, decisions, roadmap
-├── setup.bat / start.bat / check.bat
-└── .env.example
+│   ├── agent.py          the turn loop: context, model, tools, approvals
+│   ├── persona.py        personality: the system prompt builder
+│   ├── memory.py         long-term memory and background learning
+│   ├── tools/            tool framework and tools (memory, computer)
+│   ├── llm/              providers, fallback router, scripted test models
+│   ├── storage.py        SQLite: conversations, memories, settings, logs, usage
+│   ├── prefs.py          preferences changed in the app
+│   ├── runtime.py        wiring; keys; diagnostics
+│   ├── server.py         API routes and their guard
+│   ├── cli.py            start-up, app window, `check`
+│   └── web/              interface (plain HTML/CSS/JS, bundled libraries)
+├── tests/                pytest suite, plus e2e/ (mock provider + browser run)
+├── docs/                 assessment, architecture, decisions, roadmap
+└── setup.bat  start.bat  update.bat  check.bat
 ```
 
-- [Architecture](docs/ARCHITECTURE.md): how the pieces fit and where future phases plug in
-- [Decisions](docs/DECISIONS.md): why each technology was chosen
-- [Roadmap](docs/ROADMAP.md): phases, progress and what's next
+- [Assessment of 1.0](docs/ASSESSMENT-1.0.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Decisions](docs/DECISIONS.md)
+- [Roadmap and status](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)
+
+Bundled front-end libraries and fonts are listed with their licences in
+`jarvis/web/vendor/licenses/`.
