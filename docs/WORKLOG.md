@@ -6,6 +6,22 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Handoff synchronisation
+
+**Done:** synchronised the handoff, roadmap, architecture, changelog and work
+log with the merged 2.3 state. The records now include due dates, overdue
+reporting, approval-gated to-do deletion, safer process matching, automatic
+update-before-start, the current 186-test/63-browser evidence, and the next
+3.0 direction.
+
+**Verified:** documentation changes were checked with `git diff --check`.
+
+**Unverified:** live Groq behaviour, real Windows app/file actions, voice
+quality and the update-then-start flow still require Jack's PC.
+
+**Next:** commit and merge this documentation synchronisation, then begin the
+smallest durable multi-step-plan foundation.
+
 ## 10 Nov 2026 · GitHub Copilot · Overdue to-do reporting
 
 **Done:** pending to-dos with a due date in the past are now labelled

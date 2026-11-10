@@ -4,7 +4,7 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 12:45 PM (Brisbane) by GitHub Copilot.
+**Last updated:** 10 November 2026, 12:44 PM (Brisbane) by GitHub Copilot.
 
 ## How to hand this to another AI (Jack's steps)
 
@@ -87,10 +87,10 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos with due dates, approved computer/file actions and safer process matching are implemented on this branch. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos with due dates and deletion, approved computer/file actions, safer process matching, and automatic update-before-start are merged through [PR #14](https://github.com/Fanaticmouse221/jarvis/pull/14). |
 | Tests | `uv run pytest -q`: **186 passed**. Browser regression: **63 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
-What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
+What exists in 2.0 and later (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
 screen), personality with dials, agent loop with tools (`remember`, `recall`,
 `forget`, `search_conversations`, `open_app`, `open_url`, `get_system_info`),
@@ -225,11 +225,12 @@ brain and the browser run can exercise them.
   limit and cleanup of microphone tracks and audio analysis.
 
 ### [x] 8. Version 2.3 to-dos foundation
-- Migration v4 adds durable `todos` with pending/completed status.
-- The agent has `add_todo`, `list_todos` and `change_todo` tools using normal
-  permissions, logging and conversation links.
+- Migrations v4 and v5 add durable `todos` with pending/completed status and
+  optional UTC due dates.
+- The agent has `add_todo`, `list_todos`, `change_todo` and approval-gated
+  `delete_todo` tools using normal logging and conversation links.
 - The app has a protected `/api/todos` surface and a To-dos page for adding,
-  completing and reopening items.
+  completing, reopening and displaying dated items.
 
 ### [x] 9. Version 2.3 approved computer and file actions
 - `close_app` asks for approval and closes matching running application processes,
@@ -239,17 +240,21 @@ brain and the browser run can exercise them.
   recursively delete folders.
 - Added fake-model and focused safety/approval coverage for all three actions.
 
-### What to do next: continue version 2.3 "Tasks"
+### What to do next: continue version 2.3 "Tasks", then 3.0
 
 1. On Jack's PC, run a live-model check of natural task phrasing and verify
    voice separately when convenient; live Groq and microphone paths remain
    unverified here.
-2. `start.bat` now runs `update.bat /silent` before launching; verify the
-   update-then-start flow on Jack's Windows PC after pulling this change.
+2. Verify the `start.bat` update-then-start flow on Jack's Windows PC after
+   pulling the merged changes.
+3. Begin the smallest 3.0 foundation slice: durable, visible multi-step plans
+   that can resume after a restart without weakening memory, personality or
+   approval guarantees.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.
-- **2.3:** to-dos; close apps; move/delete files with approval.
+- **2.3:** to-dos with due dates and deletion; close apps; move/delete files
+  with approval.
 - **3.0:** multi-step plans that survive restarts; semantic memory if needed;
   the full app on iPhone/iPad (Tailscale was the recommended route: free
   Personal plan, private, no open ports).
