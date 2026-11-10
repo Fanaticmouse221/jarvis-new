@@ -10,10 +10,10 @@ const $ = (id) => document.getElementById(id);
 const els = {
   sidebar: $("sidebar"), scrim: $("scrim"), menuBtn: $("menuBtn"), newChat: $("newChat"), search: $("searchInput"),
   list: $("conversationList"), title: $("title"), thread: $("thread"), composer: $("composer"), input: $("input"),
-  send: $("send"), voice: $("voiceBtn"), modelSelect: $("modelSelect"), exportBtn: $("exportBtn"),
+  send: $("send"), voice: $("voiceBtn"), voiceStatus: $("voiceStatus"), modelSelect: $("modelSelect"), exportBtn: $("exportBtn"),
 };
 
-const state = { ctx: null, conversations: [], currentId: null, streaming: false, controller: null, core: null, recorder: null, voiceReply: false };
+const state = { ctx: null, conversations: [], currentId: null, streaming: false, controller: null, core: null, recorder: null, voiceReply: false, voiceStream: null, voiceContext: null, voiceFrame: 0, voiceTimer: null };
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -582,7 +582,9 @@ async function send(text, { regenerate: again = false, editId = null } = {}) {
         turn.finish(event.message);
         if (state.voiceReply && event.message && "speechSynthesis" in window) {
           window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(new SpeechSynthesisUtterance(event.message));
+          const utterance = new SpeechSynthesisUtterance(event.message);
+          utterance.addEventListener("end", () => { els.voiceStatus.textContent = ""; });
+          window.speechSynthesis.speak(utterance);
         }
         settled = finished = true;
       } else if (event.type === "error") {
@@ -609,7 +611,14 @@ async function send(text, { regenerate: again = false, editId = null } = {}) {
 
 async function toggleVoice() {
   if (state.recorder) {
-    state.recorder.stop();
+    stopVoiceRecording("Processing recording...");
+    return;
+  }
+  if ("speechSynthesis" in window && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    state.voiceReply = false;
+    els.voiceStatus.textContent = "";
+    els.voice.setAttribute("title", "Record a voice message");
     return;
   }
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
@@ -621,18 +630,30 @@ async function toggleVoice() {
     const recorder = new MediaRecorder(stream);
     const chunks = [];
     state.recorder = recorder;
+    state.voiceStream = stream;
     state.voiceReply = true;
     els.voice.classList.add("recording");
-    els.voice.setAttribute("aria-label", "Stop recording");
+    els.voice.setAttribute("aria-label", "Stop recording and transcribe");
+    els.voice.setAttribute("title", "Stop recording and transcribe");
+    els.voiceStatus.textContent = "Listening...";
     recorder.addEventListener("dataavailable", (event) => { if (event.data.size) chunks.push(event.data); });
     recorder.addEventListener("stop", async () => {
       stream.getTracks().forEach((track) => track.stop());
+      state.voiceStream = null;
+      if (state.voiceContext) {
+        state.voiceContext.close();
+        state.voiceContext = null;
+      }
+      cancelAnimationFrame(state.voiceFrame);
+      clearTimeout(state.voiceTimer);
       state.recorder = null;
-      state.voiceReply = true;
       els.voice.classList.remove("recording");
       els.voice.setAttribute("aria-label", "Record a voice message");
+      els.voice.setAttribute("title", "Record a voice message");
       try {
         const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        if (!blob.size) throw new Error("The recording was empty.");
+        els.voiceStatus.textContent = "Transcribing...";
         const data = await api("/transcribe", {
           method: "POST",
           body: blob,
@@ -640,19 +661,62 @@ async function toggleVoice() {
         });
         els.input.value = data.text;
         autosize();
+        els.voiceStatus.textContent = "Speaking reply...";
         els.composer.requestSubmit();
       } catch (error) {
         state.voiceReply = false;
+        els.voiceStatus.textContent = "";
         toast(error.message, "error");
       }
     });
     recorder.start();
-    toast("Listening...");
+    state.voiceTimer = setTimeout(() => stopVoiceRecording("Processing recording..."), 120000);
+    monitorVoiceSilence(stream);
   } catch (error) {
     state.recorder = null;
     state.voiceReply = false;
+    els.voiceStatus.textContent = "";
     toast(error.name === "NotAllowedError" ? "Microphone access was denied." : error.message, "error");
   }
+}
+
+function stopVoiceRecording(status = "") {
+  if (!state.recorder) return;
+  els.voiceStatus.textContent = status;
+  state.recorder.stop();
+}
+
+function monitorVoiceSilence(stream) {
+  if (!window.AudioContext && !window.webkitAudioContext) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const context = new AudioContextClass();
+  const analyser = context.createAnalyser();
+  analyser.fftSize = 512;
+  const source = context.createMediaStreamSource(stream);
+  source.connect(analyser);
+  state.voiceContext = context;
+  const samples = new Uint8Array(analyser.fftSize);
+  const started = performance.now();
+  let quietSince = 0;
+  const check = () => {
+    if (!state.recorder) return;
+    analyser.getByteTimeDomainData(samples);
+    let total = 0;
+    for (const sample of samples) {
+      const value = (sample - 128) / 128;
+      total += value * value;
+    }
+    const loud = Math.sqrt(total / samples.length) > 0.025;
+    const now = performance.now();
+    if (loud) quietSince = 0;
+    else if (now - started > 900 && !quietSince) quietSince = now;
+    if (quietSince && now - quietSince > 2500) {
+      stopVoiceRecording("Silence detected...");
+      return;
+    }
+    state.voiceFrame = requestAnimationFrame(check);
+  };
+  state.voiceFrame = requestAnimationFrame(check);
 }
 
 // ---------- wiring ----------

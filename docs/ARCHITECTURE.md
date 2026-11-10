@@ -150,5 +150,8 @@ hosted Whisper endpoint using the existing Groq key; no audio is stored in
 SQLite. The returned transcript is inserted into the ordinary chat composer, so
 memory, personality, tools, permissions and approvals remain exactly the same.
 After a voice-originated reply, the browser uses its built-in speech synthesis
-to speak the final text. Telegram voice notes, interruption and silence
-detection are later additions, not separate agent paths.
+to speak the final text. Tapping the microphone stops an active recording or
+cancels active speech. While active, the composer reports listening,
+transcribing or speaking; a Web Audio analyser stops recordings after sustained
+silence, and a two-minute timer is the final bound. Telegram voice notes are
+still a later addition, not a separate agent path.

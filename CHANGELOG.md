@@ -6,6 +6,9 @@
   the protected JARVIS server for Groq Whisper transcription.
 - Voice transcripts use the normal chat, memory and tool flow; replies are
   spoken automatically with the browser's available speech synthesis voice.
+- Added listening, transcribing and speaking status feedback, tap-to-stop
+  recording, speech interruption, sustained-silence auto-stop and a two-minute
+  recording limit.
 - Added clear handling for missing keys, denied microphone access, empty or
   oversized recordings, rate limits and provider failures.
 

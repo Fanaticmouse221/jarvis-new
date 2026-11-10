@@ -6,6 +6,27 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · voice controls checkpoint
+
+**Done:** extended the browser voice foundation with visible listening,
+transcribing and speaking status, tap-to-stop recording, speech interruption,
+automatic stop after 2.5 seconds of sustained silence, and a two-minute
+recording limit. Audio tracks and the analyser are cleaned up when recording
+ends or fails. Added a browser assertion for the status element.
+
+**Verified:** `node --check` passed for the browser JavaScript,
+`git diff --check` passed, `uv run pytest -q` passed **178 tests**, and the
+browser regression passed **57 checks** with no console errors or warnings.
+
+**Unverified:** real microphone permissions, silence thresholds across devices,
+live Groq Whisper access, transcription accuracy and speech quality still need
+Jack's Windows PC. Telegram voice notes are not implemented.
+
+**Next:** route Telegram voice notes through the same bounded transcription
+service, then run a real-world Windows voice check before calling 2.2 complete.
+
+---
+
 ## 10 Nov 2026 · GitHub Copilot · voice foundation
 
 **Done:** added the first 2.2 voice slice. The browser microphone button records
