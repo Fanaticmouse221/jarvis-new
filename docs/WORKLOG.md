@@ -1,0 +1,56 @@
+# Work log
+
+Newest entry first. One entry per working session or pushed piece of work: what
+changed, what was verified and how, what is still unverified, what comes next.
+Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
+
+---
+
+## 10 Nov 2026, 10:50 AM · Claude · branch `jarvis-2.1`
+
+**Done**
+- Jack installed 2.0 on his Windows PC. `setup.bat` ran (he first typed
+  `\setup.bat`; PowerShell needs `.\setup.bat`) and he reported "that works good".
+- Jack asked for: phone messaging, more abilities, continued development, and a
+  handoff system so another AI can continue when one hits its usage limit.
+- Asked Jack how he wants phone access. **He chose a Telegram bot.**
+- Researched free options and recorded the findings in `HANDOFF.md` ("Facts
+  checked"): Telegram Bot API, Tailscale, search providers, Open-Meteo, other
+  model providers (GitHub Models retired; OpenAI API has no free tier).
+- Read the whole 2.0 codebase and wrote the design for 2.1 into `HANDOFF.md`.
+- Added the handoff system: `HANDOFF.md`, `AGENTS.md` (same rules as `CLAUDE.md`),
+  this log. Updated the roadmap order (2.1 is now phone + abilities; voice is 2.2).
+
+**Verified**
+- Nothing new to verify: this commit is documentation only. `main` is unchanged
+  (67 tests and the 39-check browser run passed when 2.0 was released).
+
+**Not done / unverified**
+- **No 2.1 feature code exists yet.** Start at item 1 of "What to do next" in `HANDOFF.md`.
+- Still unconfirmed on Jack's PC: memory after a restart, opening apps, how the
+  personality sounds with the real model.
+
+**Next**
+- `HANDOFF.md` → "What to do next", items 1 to 5 in order.
+
+---
+
+## 10 Nov 2026, morning · Claude · branch `jarvis-2.0` → `main` (PR #1)
+
+**Done:** JARVIS 2.0. Assessment of 0.1 (`docs/ASSESSMENT-1.0.md`); long-term
+memory; personality; agent loop with tools, permissions and approvals; new
+interface; model layer with fallback and rate-limit handling; local API protection.
+Details in `CHANGELOG.md`; decisions D11–D23 in `docs/DECISIONS.md`.
+
+**Verified:** 67 automated tests; a 39-check Playwright browser run against a
+mock provider, including a server restart ("what do you know about me?").
+
+**Unverified at the time:** live Groq replies, tone with a real model, quality
+of automatic learning with a real model, all Windows-only paths.
+
+---
+
+## 9 Nov 2026 · Claude · `main`
+
+**Done:** v0.1.0. Hardware check of Jack's laptop, stack chosen (D1–D10), text
+chat with streaming, saved conversations, model fallback, Windows setup scripts.

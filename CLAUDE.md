@@ -1,6 +1,8 @@
 # Working on JARVIS
 
-Personal AI assistant for Jack. Read `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` and `docs/ROADMAP.md` before significant changes.
+Personal AI assistant for Jack. **Start with `HANDOFF.md`**: it says where the project stands and what to do next. Then read `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` and `docs/ROADMAP.md` before significant changes.
+
+These instructions are for any AI assistant working on this repository. `AGENTS.md` and `CLAUDE.md` hold the same text; change both together.
 
 ## What matters most
 **Memory and personality are the product.** Anything that weakens either (a prompt change that flattens the voice, a shortcut that drops memories from context) is a regression even if tests pass.
@@ -17,6 +19,9 @@ Personal AI assistant for Jack. Read `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`
 - Keep it simple: one process, SQLite, no frontend build step, no agent framework, unless a decision in `docs/DECISIONS.md` changes that.
 - New tools go in `jarvis/tools/` with a risk level; anything that returns outside content must set `untrusted_output=True`.
 
+## Keep the handoff alive
+Jack may continue this project in a different AI at any time. Before every commit, update `HANDOFF.md` (current state, ticked boxes, what to do next) and add an entry at the top of `docs/WORKLOG.md` (what changed, what was verified and how, what is unverified). Commit small and push often, so nothing lives only in one session.
+
 ## Commands
 ```bash
 uv sync                                         # install dependencies
@@ -28,5 +33,5 @@ python tests/e2e/run_e2e.py                     # full browser run (Playwright +
 
 ## When finishing a piece of work
 1. Tests pass (add tests for new behaviour) and the browser run passes; look at its screenshots.
-2. Update `CHANGELOG.md`, the status table in `docs/ROADMAP.md`, and add a `docs/DECISIONS.md` entry for any new technology choice.
+2. Update `CHANGELOG.md`, the status table in `docs/ROADMAP.md`, `HANDOFF.md`, `docs/WORKLOG.md`, and add a `docs/DECISIONS.md` entry for any new technology choice.
 3. Tell Jack exactly how to update and what to try, and say plainly what could not be verified here.
