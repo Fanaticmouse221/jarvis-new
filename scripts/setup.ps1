@@ -1,10 +1,11 @@
-# JARVIS one-time setup for Windows. Run via setup.bat.
+# JARVIS one-time setup for Windows. Run via setup.bat. Safe to run again after updates.
 # Installs uv (free, open-source Python project manager) if missing, then
 # Python 3.12 and JARVIS's dependencies into a private .venv folder.
 # Nothing is installed system-wide except uv itself.
 
 $ErrorActionPreference = 'Stop'
-Set-Location (Split-Path $PSScriptRoot -Parent)
+$root = Split-Path $PSScriptRoot -Parent
+Set-Location $root
 
 function Write-Step($text) { Write-Host "`n>> $text" -ForegroundColor Cyan }
 function Update-SessionPath {
@@ -28,7 +29,7 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 }
 uv --version
 
-Write-Step "Installing Python 3.12 and dependencies (first run downloads roughly 50 MB)"
+Write-Step "Installing Python 3.12 and dependencies (first run downloads roughly 60 MB)"
 uv sync
 if ($LASTEXITCODE -ne 0) { throw "uv sync failed. See the messages above." }
 
@@ -45,8 +46,21 @@ Write-Step "Running the self-tests"
 uv run pytest -q
 if ($LASTEXITCODE -ne 0) { throw "Self-tests failed. Please report the output above." }
 
+Write-Step "Adding a JARVIS shortcut to your desktop"
+try {
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'JARVIS.lnk'))
+    $shortcut.TargetPath = Join-Path $root 'start.bat'
+    $shortcut.WorkingDirectory = $root
+    $shortcut.IconLocation = Join-Path $root 'jarvis\web\jarvis.ico'
+    $shortcut.WindowStyle = 7   # start the console window minimised
+    $shortcut.Description = 'Start JARVIS'
+    $shortcut.Save()
+    Write-Host "Created: $desktop\JARVIS.lnk"
+} catch {
+    Write-Host "Couldn't create the shortcut ($($_.Exception.Message)). You can still use start.bat." -ForegroundColor Yellow
+}
+
 Write-Host "`nSetup complete." -ForegroundColor Green
-Write-Host "Next steps:"
-Write-Host "  1. Open .env in Notepad and paste your Groq key after GROQ_API_KEY="
-Write-Host "  2. Double-click check.bat to test the connection"
-Write-Host "  3. Double-click start.bat to launch JARVIS"
+Write-Host "Next: double-click JARVIS on your desktop (or start.bat)."
+Write-Host "The first screen asks for a free Groq key and checks it for you."

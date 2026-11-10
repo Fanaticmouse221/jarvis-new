@@ -1,0 +1,152 @@
+"""The tool framework: how JARVIS acts, and what keeps those actions safe.
+
+A tool is a named function with a JSON-schema for its arguments, a risk level
+and a handler. The agent (agent.py) validates the model's arguments against the
+schema, applies the user's permission for the tool, asks for approval when
+needed, runs the handler with a timeout and records the outcome.
+
+Risk levels
+  read       looks something up; changes nothing
+  act        a small, visible, reversible action (open an app, save a memory)
+  sensitive  hard to undo (overwriting or deleting). Always asks first.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Awaitable, Callable
+
+RISK_READ, RISK_ACT, RISK_SENSITIVE = "read", "act", "sensitive"
+GROUPS = {"memory": "Memory", "computer": "This computer"}
+
+
+class ToolError(Exception):
+    """A tool could not do what was asked. The message is shown to the model and the user."""
+
+
+@dataclass
+class ToolResult:
+    ok: bool
+    text: str  # what the model reads
+    summary: str = ""  # one line for the interface and the action log
+    data: dict[str, Any] | None = None  # structured extras for the interface
+    untrusted: bool = False  # content came from outside (web page, file)
+
+    def __post_init__(self) -> None:
+        if not self.summary:
+            self.summary = (self.text.strip().splitlines() or [""])[0][:200]
+
+
+@dataclass
+class ToolContext:
+    """Everything a tool handler may use. Built fresh for each turn."""
+
+    conversation_id: str | None
+    run_id: str
+    services: dict[str, Any] = field(default_factory=dict)  # memory, store, launcher...
+    tainted: bool = False  # set once untrusted content has been read in this turn
+
+
+Handler = Callable[[dict[str, Any], ToolContext], Awaitable[ToolResult]]
+
+
+@dataclass
+class Tool:
+    name: str
+    group: str
+    label: str  # short human name, e.g. "Open an app"
+    description: str  # for the model
+    parameters: dict[str, Any]  # JSON schema (object)
+    risk: str
+    handler: Handler
+    describe: Callable[[dict[str, Any]], str]  # one line describing a specific call
+    timeout: float = 30.0
+    untrusted_output: bool = False
+
+    def schema(self) -> dict[str, Any]:
+        return {
+            "type": "function",
+            "function": {"name": self.name, "description": self.description, "parameters": self.parameters},
+        }
+
+    def default_policy(self) -> str:
+        return "ask" if self.risk == RISK_SENSITIVE else "allow"
+
+
+class ToolRegistry:
+    def __init__(self) -> None:
+        self._tools: dict[str, Tool] = {}
+
+    def register(self, *tools: Tool) -> None:
+        for tool in tools:
+            self._tools[tool.name] = tool
+
+    def get(self, name: str) -> Tool | None:
+        return self._tools.get(name)
+
+    def all(self) -> list[Tool]:
+        return list(self._tools.values())
+
+    def policy(self, tool: Tool, prefs: dict[str, Any]) -> str:
+        """The user's permission for a tool: allow, ask or off."""
+        if tool.group == "memory" and not prefs.get("memory_enabled", True):
+            return "off"
+        policy = prefs.get("tool_policy", {}).get(tool.name, tool.default_policy())
+        if tool.risk == RISK_SENSITIVE and policy == "allow":
+            return "ask"  # sensitive tools can be switched off, but never set to run unasked
+        return policy
+
+    def enabled(self, prefs: dict[str, Any]) -> list[Tool]:
+        return [tool for tool in self._tools.values() if self.policy(tool, prefs) != "off"]
+
+
+def obj(properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+    """Shorthand for an object schema."""
+    return {"type": "object", "properties": properties, "required": required or []}
+
+
+def validate_args(schema: dict[str, Any], args: Any) -> tuple[dict[str, Any], str | None]:
+    """Check and tidy tool arguments against the (small) schema subset JARVIS uses.
+
+    Returns (clean_args, error). Unknown arguments are dropped, since models
+    sometimes add extras; wrong types are coerced when that is unambiguous.
+    """
+    if not isinstance(args, dict):
+        return {}, "arguments must be a JSON object"
+    properties = schema.get("properties", {})
+    clean: dict[str, Any] = {}
+    for key, spec in properties.items():
+        value = args.get(key)
+        if value is None or value == "":
+            if key in schema.get("required", []):
+                return {}, f"missing required argument '{key}'"
+            continue
+        kind = spec.get("type")
+        if kind == "string":
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                value = str(value)
+            if not isinstance(value, str):
+                return {}, f"'{key}' must be text"
+            value = value.strip()
+            if "maxLength" in spec and len(value) > spec["maxLength"]:
+                return {}, f"'{key}' is too long (limit {spec['maxLength']} characters)"
+            if "enum" in spec and value not in spec["enum"]:
+                return {}, f"'{key}' must be one of: {', '.join(spec['enum'])}"
+        elif kind == "integer":
+            if isinstance(value, str) and value.strip().lstrip("#-").isdigit():
+                value = int(value.strip().lstrip("#"))
+            if isinstance(value, float) and value.is_integer():
+                value = int(value)
+            if isinstance(value, bool) or not isinstance(value, int):
+                return {}, f"'{key}' must be a whole number"
+            if "minimum" in spec and value < spec["minimum"]:
+                return {}, f"'{key}' must be at least {spec['minimum']}"
+            if "maximum" in spec and value > spec["maximum"]:
+                return {}, f"'{key}' must be at most {spec['maximum']}"
+        elif kind == "boolean":
+            if isinstance(value, str) and value.lower() in ("true", "false"):
+                value = value.lower() == "true"
+            if not isinstance(value, bool):
+                return {}, f"'{key}' must be true or false"
+        clean[key] = value
+    return clean, None

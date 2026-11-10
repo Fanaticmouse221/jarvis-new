@@ -1,0 +1,281 @@
+"""End-to-end check of JARVIS in a real browser.
+
+Starts a mock model provider and the real JARVIS server, then drives the real
+interface with Playwright: first-run key entry, chat, real tool execution,
+approvals, automatic learning, memory management, a server restart, rate-limit
+fallback and the mobile layout. Screenshots are written for visual review.
+
+Not part of the pytest suite because it needs a browser:
+
+    pip install playwright     (uses an installed Chrome; set CHROME to its path)
+    python tests/e2e/run_e2e.py [output-dir]
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import stat
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+from playwright.sync_api import Page, sync_playwright
+
+REPO = Path(__file__).resolve().parents[2]
+OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/jarvis-e2e").resolve()
+RUN, SHOTS, BIN = OUT / "run", OUT / "shots", OUT / "bin"
+MARKER = OUT / "marker.txt"
+APP, MOCK = "http://127.0.0.1:8765", "http://127.0.0.1:8799"
+KEY = "gsk_e2e_valid_key_123456"
+CHROME = os.environ.get("CHROME", "/usr/bin/google-chrome")
+passed: list[str] = []
+
+
+def check(condition: object, label: str) -> None:
+    if not condition:
+        raise AssertionError(label)
+    passed.append(label)
+    print(f"  ok  {label}")
+
+
+def wait_http(url: str) -> None:
+    for _ in range(80):
+        try:
+            urllib.request.urlopen(url, timeout=1)
+            return
+        except urllib.error.HTTPError:
+            return  # the server answered; that's all we need
+        except OSError:
+            time.sleep(0.25)
+    raise RuntimeError(f"{url} did not come up")
+
+
+def start_jarvis() -> subprocess.Popen:
+    env = {k: v for k, v in os.environ.items() if k not in ("GROQ_API_KEY", "JARVIS_MODELS")}
+    env.update(
+        JARVIS_GROQ_BASE_URL=f"{MOCK}/v1",
+        JARVIS_DB_PATH=str(RUN / "jarvis.db"),
+        PATH=f"{BIN}{os.pathsep}{env['PATH']}",
+    )
+    log = open(OUT / "jarvis.log", "a")
+    proc = subprocess.Popen(
+        ["uv", "run", "--project", str(REPO), "jarvis", "serve", "--no-browser", "--port", "8765"],
+        cwd=RUN, env=env, stdout=log, stderr=subprocess.STDOUT,
+    )
+    wait_http(APP + "/")
+    return proc
+
+
+def finished(page: Page) -> int:
+    return page.locator(".turn.assistant .meta .turn-actions").count()
+
+
+def send(page: Page, text: str, wait: bool = True) -> None:
+    before = finished(page)
+    page.fill("#input", text)
+    page.press("#input", "Enter")
+    if wait:
+        page.wait_for_function("n => document.querySelectorAll('.turn.assistant .meta .turn-actions').length > n", arg=before, timeout=30000)
+        page.wait_for_timeout(120)
+
+
+def last_turn(page: Page):
+    return page.locator(".turn.assistant").last
+
+
+def main() -> None:
+    shutil.rmtree(OUT, ignore_errors=True)
+    for folder in (RUN, SHOTS, BIN):
+        folder.mkdir(parents=True)
+    app_script = BIN / "e2e-marker-app"  # a real program for JARVIS to launch
+    app_script.write_text(f"#!/bin/sh\necho launched > {MARKER}\nsleep 4\n")
+    app_script.chmod(app_script.stat().st_mode | stat.S_IEXEC)
+
+    mock = subprocess.Popen(
+        ["uv", "run", "--project", str(REPO), "uvicorn", "tests.e2e.mock_openai:app", "--port", "8799", "--log-level", "warning"],
+        cwd=REPO, stdout=open(OUT / "mock.log", "w"), stderr=subprocess.STDOUT,
+    )
+    wait_http(MOCK + "/_seen")
+    jarvis = start_jarvis()
+    errors: list[str] = []
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=CHROME, args=["--no-sandbox"])
+            page = browser.new_page(viewport={"width": 1360, "height": 880})
+            # "Failed to load resource" lines are the browser noting HTTP failures this run causes on
+            # purpose (a rejected key, the restart, the token probe). Everything else must be clean.
+            page.on("console", lambda m: errors.append(f"console {m.type}: {m.text}") if m.type in ("error", "warning") and "Failed to load resource" not in m.text else None)
+            page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
+            shot = lambda name: page.screenshot(path=str(SHOTS / f"{name}.png"))
+
+            print("First run: connecting a model")
+            page.goto(APP + "/")
+            page.wait_for_selector(".setup")
+            check("Connect a model" in page.inner_text(".setup"), "first run shows the setup panel, not a dead chat box")
+            check("warn" in page.get_attribute("#railStatus .dot", "class"), "status light is amber while no model is ready")
+            shot("01-first-run")
+            page.fill(".setup input", "gsk_wrong_key_000000")
+            page.click(".setup button[type=submit]")
+            page.wait_for_function("document.querySelector('.setup .hint:not([hidden])')?.textContent.includes('rejected')")
+            check(not (RUN / ".env").exists() or KEY not in (RUN / ".env").read_text(), "a rejected key is not saved")
+            page.fill(".setup input", KEY)
+            page.click(".setup button[type=submit]")
+            page.wait_for_selector(".starters")
+            check(f"GROQ_API_KEY={KEY}" in (RUN / ".env").read_text(), "the accepted key is saved to .env")
+            check("ok" in page.get_attribute("#railStatus .dot", "class"), "status light turns green")
+            check(page.locator("#modelSelect option").count() == 4, "three models were selected automatically from the account's list")
+            shot("02-welcome")
+
+            print("Memory: told, learned, and visible")
+            send(page, "Remember that I prefer worked solutions step by step")
+            check("Saved to memory" in last_turn(page).locator(".step[data-status=ok] .step-title").inner_text(), "remember ran as a real tool step")
+            send(page, "I'm studying chemistry for my exam next week")
+            page.wait_for_selector(".learned", timeout=15000)
+            check("chemistry" in page.inner_text(".learned"), "JARVIS learned a fact on its own and showed it")
+            shot("03-learned")
+
+            print("Actions: real, verified, and honest about failure")
+            send(page, "open e2e-marker-app")
+            check(MARKER.exists(), "open_app really started the program (it wrote its marker file)")
+            check("Opened e2e-marker-app" in last_turn(page).locator(".step-title").inner_text(), "the step reports the real outcome")
+            send(page, "open definitely-not-an-app")
+            check(last_turn(page).locator(".step[data-status=error]").count() == 1, "a failed action is shown as failed")
+            check("didn't work" in last_turn(page).inner_text(), "JARVIS says it failed instead of pretending")
+            send(page, "show me a formatting demo")
+            check(last_turn(page).locator(".katex").count() >= 2, "maths renders")
+            check(last_turn(page).locator(".code-block .hljs-keyword").count() >= 1, "code is highlighted")
+            check(last_turn(page).locator("table").count() == 1, "tables render")
+            check("hidden reasoning" not in page.inner_text("#thread"), "the model's private reasoning is not shown")
+            shot("04-formatting")
+
+            print("Settings: personality and permissions")
+            page.click(".rail-item[data-nav=settings]")
+            page.wait_for_selector(".page h2:has-text('System status')")
+            shot("05-settings")
+            page.select_option("select[aria-label='Permission for Open an app']", "ask")
+            page.click(".segmented[aria-label='Humour'] button:has-text('Off')")
+            page.click(".segmented[aria-label='Answer length'] button:has-text('Brief')")
+            page.fill("input[placeholder='Your first name']", "Jack")
+            page.press("input[placeholder='Your first name']", "Tab")
+            page.wait_for_timeout(600)
+
+            print("Approvals")
+            page.click(".rail-item[data-nav=chat]")
+            page.wait_for_selector(".welcome")
+            MARKER.unlink()
+            send(page, "open e2e-marker-app", wait=False)
+            page.wait_for_selector(".approval")
+            page.wait_for_timeout(400)
+            check(not MARKER.exists(), "an ask-first action does not run before approval")
+            check("Allow JARVIS to open e2e-marker-app?" in page.inner_text(".approval"), "the approval request says exactly what will happen")
+            shot("06-approval")
+            before = finished(page)
+            page.click(".approval button:has-text('Allow')")
+            page.wait_for_function("n => document.querySelectorAll('.turn.assistant .meta .turn-actions').length > n", arg=before, timeout=30000)
+            check(MARKER.exists(), "after approval it runs for real")
+            MARKER.unlink()
+            send(page, "open e2e-marker-app", wait=False)
+            page.wait_for_selector(".approval")
+            before = finished(page)
+            page.click(".approval button:has-text(\"Don't allow\")")
+            page.wait_for_function("n => document.querySelectorAll('.turn.assistant .meta .turn-actions').length > n", arg=before, timeout=30000)
+            check(not MARKER.exists() and last_turn(page).locator(".step[data-status=denied]").count() == 1, "a declined action never runs")
+
+            seen = json.load(urllib.request.urlopen(MOCK + "/_seen"))
+            system = next(r for r in reversed(seen) if r.get("tools"))["messages"][0]["content"]
+            check("No humour" in system and "as short as accuracy allows" in system, "personality dials reached the model")
+            check("Jack's personal AI assistant" in system, "the model is told who it works for")
+            check("[#1]" in system and "chemistry" in system, "memories are sent to the model with every message")
+            tool_names = [t["function"]["name"] for t in seen[-1].get("tools") or next(r for r in reversed(seen) if r.get("tools"))["tools"]]
+            check({"remember", "recall", "open_app"} <= set(tool_names), "real tool definitions are sent to the model")
+
+            print("Memory screen")
+            page.click(".rail-item[data-nav=memory]")
+            page.wait_for_selector(".memory")
+            check(page.locator(".memory").count() == 2, "both memories are listed")
+            page.click("button:has-text('Add a memory')")
+            page.fill(".memory-form textarea", "Is left-handed.")
+            page.select_option(".memory-form select", "personal")
+            page.click(".memory-form button:has-text('Add memory')")
+            page.wait_for_function("document.querySelectorAll('.memory').length === 3")
+            page.locator(".memory", has_text="left-handed").locator("button[title^='Pin']").click()
+            page.wait_for_selector(".memory.pinned")
+            shot("07-memory")
+            page.fill("input[aria-label='Search memory']", "left")
+            page.wait_for_function("document.querySelectorAll('.memory').length === 1")
+            check("left-handed" in page.inner_text(".memory"), "memory search finds the right entry")
+
+            print("Restart: does it remember?")
+            jarvis.terminate()
+            jarvis.wait(timeout=15)
+            jarvis = start_jarvis()
+            page.goto(APP + "/#/")
+            page.reload()
+            page.wait_for_selector(".starters")
+            check("3 memories on file" in page.inner_text(".welcome"), "memories survived the restart")
+            check("Continue:" in page.inner_text(".welcome"), "JARVIS offers to pick up the last conversation")
+            check(page.locator(".conv").count() == 2, "conversations survived the restart")
+            shot("08-after-restart")
+            send(page, "What do you know about me?")
+            reply = last_turn(page).inner_text()
+            check(all(word in reply for word in ("chemistry", "left-handed", "worked solutions")), "after a restart JARVIS recalls what it was told, learned and given")
+
+            print("Rate limits and fallback")
+            send(page, "rate limit test please")
+            check("gpt-oss-20b" in last_turn(page).locator(".meta").inner_text(), "when the first model is rate-limited the next one answers")
+            page.click(".rail-item[data-nav=settings]")
+            page.wait_for_selector(".page h2:has-text('System status')")
+            check("Resting" in page.inner_text(".model-list"), "the rate-limited model is shown as resting")
+            check("Left today" in page.inner_text(".model-list"), "remaining allowance from the provider is shown")
+            page.click("button:has-text('Test models now')")
+            page.wait_for_selector(".result-list .badge")
+            shot("09-status")
+
+            print("Activity log")
+            page.click(".rail-item[data-nav=activity]")
+            page.wait_for_selector(".log-item")
+            log_text = page.inner_text(".log")
+            check("Learned:" in log_text and "Declined by you" in log_text and "Approved by you" in log_text, "the log records learning, approvals and refusals")
+            shot("10-activity")
+
+            print("Conversation tools")
+            page.click(".rail-item[data-nav=chat]")
+            page.fill("#searchInput", "formatting")
+            page.wait_for_function("document.querySelectorAll('.conv').length === 1")
+            page.click(".conv-open")
+            page.wait_for_selector(".turn.user")
+            check(page.locator(".step").count() >= 3, "tool steps are shown again when a conversation is reopened")
+            count = page.locator(".turn.assistant").count()
+            before = finished(page)
+            last_turn(page).locator("button[title='Try again']").click()
+            page.wait_for_function("n => document.querySelectorAll('.turn.assistant .meta .turn-actions').length >= n", arg=before, timeout=30000)
+            page.wait_for_timeout(300)
+            check(page.locator(".turn.assistant").count() == count, "try again replaces the last reply")
+            status = page.evaluate("fetch('/api/bootstrap').then(r => r.status)")
+            check(status == 401, "the API rejects requests that don't carry the session token")
+
+            print("Mobile layout")
+            phone = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+            phone.on("pageerror", lambda e: errors.append(f"mobile pageerror: {e}"))
+            phone.goto(page.url)
+            phone.wait_for_selector(".turn.user")
+            phone.screenshot(path=str(SHOTS / "11-mobile-chat.png"))
+            phone.goto(APP + "/#/memory")
+            phone.wait_for_selector(".memory")
+            phone.screenshot(path=str(SHOTS / "12-mobile-memory.png"))
+            overflow = phone.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1")
+            check(not overflow, "no sideways scrolling on a phone-sized screen")
+            browser.close()
+        check(not errors, f"no browser errors or warnings ({errors[:3]})")
+    finally:
+        jarvis.terminate()
+        mock.terminate()
+    print(f"\n{len(passed)} checks passed. Screenshots: {SHOTS}")
+
+
+if __name__ == "__main__":
+    main()
