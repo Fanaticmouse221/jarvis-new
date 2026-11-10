@@ -15,13 +15,14 @@ from collections import deque
 from typing import Any, Coroutine
 
 from jarvis.agent import Agent, ApprovalBroker
-from jarvis.config import KEY_ENV, Settings, save_api_key
+from jarvis.config import KEY_ENV, Settings, save_api_key, save_telegram_token
 from jarvis.llm import ChatMessage, LLMError, ModelRouter
 from jarvis.llm.openai_compat import OpenAICompatProvider
 from jarvis.llm.router import GROQ_PREFERRED, base_url_for
 from jarvis.memory import Learner, Memory
 from jarvis.prefs import Prefs
 from jarvis.storage import Store, utc_now
+from jarvis.telegram import TelegramService
 from jarvis.tools import build_registry
 from jarvis.tools.system_tools import AppLauncher, default_launcher
 
@@ -68,7 +69,8 @@ class Runtime:
         )
         self.active: set[str] = set()  # conversations with a reply in progress
         self.token = self._load_token()
-        self._background_services: list[Any] = []
+        self.telegram = TelegramService(self, token=settings.telegram_bot_token, api_base=settings.telegram_api)
+        self._background_services: list[Any] = [self.telegram]
         self._running = False
 
     # ----- plumbing -------------------------------------------------------
@@ -205,6 +207,17 @@ class Runtime:
 
     def remove_key(self, provider: str) -> None:
         self._apply_settings(save_api_key(self.settings, provider, None))
+
+    async def set_telegram_token(self, token: str) -> dict[str, Any]:
+        bot = await self.telegram.verify_token(token.strip())
+        self._apply_settings(save_telegram_token(self.settings, token))
+        await self.telegram.configure(self.settings.telegram_bot_token, bot=bot)
+        return self.telegram.status()
+
+    async def remove_telegram(self) -> dict[str, Any]:
+        self._apply_settings(save_telegram_token(self.settings, None))
+        await self.telegram.remove()
+        return self.telegram.status()
 
     # ----- diagnostics ----------------------------------------------------
 

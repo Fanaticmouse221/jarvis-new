@@ -13,6 +13,7 @@ Secrets (API keys) only ever live in `.env`, which git ignores.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -115,6 +116,8 @@ class Settings:
     db_path: Path = Path("data/jarvis.db")
     env_path: Path = Path(".env")
     workspace: Path = field(default_factory=default_workspace)
+    telegram_bot_token: str = field(default="", repr=False)
+    telegram_api: str = "https://api.telegram.org"
 
     max_history_messages: int = 24
     max_context_chars: int = 6000
@@ -159,6 +162,8 @@ class Settings:
             db_path=db_path,
             env_path=env_path,
             workspace=workspace,
+            telegram_bot_token=env("TELEGRAM_BOT_TOKEN", "").strip(),
+            telegram_api=env("JARVIS_TELEGRAM_API", "https://api.telegram.org").rstrip("/"),
             max_history_messages=_int(env("JARVIS_MAX_HISTORY_MESSAGES"), 24),
             max_context_chars=_int(env("JARVIS_MAX_CONTEXT_CHARS"), 6000),
         )
@@ -191,3 +196,19 @@ def save_api_key(settings: Settings, provider: str, key: str | None) -> Settings
         os.environ.pop(name, None)
         keys.pop(name, None)
     return replace(settings, api_keys=keys)
+
+
+def save_telegram_token(settings: Settings, token: str | None) -> Settings:
+    """Keep the bot credential in .env, never in the database or API responses."""
+    token = (token or "").strip()
+    if token and not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]{20,}", token):
+        raise ValueError("That doesn't look like a complete BotFather token.")
+    settings.env_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.env_path.touch(exist_ok=True)
+    if token:
+        set_key(str(settings.env_path), "TELEGRAM_BOT_TOKEN", token, quote_mode="never")
+        os.environ["TELEGRAM_BOT_TOKEN"] = token
+    else:
+        unset_key(str(settings.env_path), "TELEGRAM_BOT_TOKEN")
+        os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+    return replace(settings, telegram_bot_token=token)

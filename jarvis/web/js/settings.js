@@ -1,6 +1,7 @@
 // The Settings screen: system status, personality, models, permissions and data.
 
 import { api } from "./api.js";
+import { phoneSection } from "./phone.js";
 import { confirmDialog, debounce, fmtBytes, h, icon, iconButton, plural, row, section, segmented, toast, toggle } from "./util.js";
 
 const PERSONA = {
@@ -244,5 +245,5 @@ export async function renderSettings(page, ctx) {
     ),
   );
 
-  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, personality, modelsSection, permissions, data);
+  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, phoneSection(), personality, modelsSection, permissions, data);
 }

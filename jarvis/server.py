@@ -47,6 +47,7 @@ from jarvis.persona import greeting
 from jarvis.prefs import PERSONA_OPTIONS
 from jarvis.runtime import Runtime
 from jarvis.storage import MEMORY_KINDS
+from jarvis.telegram import TelegramError
 from jarvis.tools import GROUPS
 
 log = logging.getLogger("jarvis.server")
@@ -75,6 +76,10 @@ class KeyRequest(BaseModel):
 class ApprovalRequest(BaseModel):
     approve: bool
     always: bool = False
+
+
+class TelegramTokenRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=300)
 
 
 class MemoryCreate(BaseModel):
@@ -213,6 +218,38 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         return await rt.check_models()
 
     # ----- conversations ---------------------------------------------------
+
+    @api.get("/telegram")
+    def telegram_state() -> dict[str, Any]:
+        return rt.telegram.status()
+
+    @api.post("/telegram/token")
+    async def telegram_token(body: TelegramTokenRequest) -> dict[str, Any]:
+        try:
+            return await rt.set_telegram_token(body.token)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        except TelegramError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.post("/telegram/unlink")
+    async def telegram_unlink() -> dict[str, Any]:
+        await rt.telegram.unlink()
+        return rt.telegram.status()
+
+    @api.post("/telegram/test")
+    async def telegram_test() -> dict[str, Any]:
+        try:
+            await rt.telegram.test_message()
+            return {"ok": True}
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        except TelegramError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.delete("/telegram")
+    async def telegram_remove() -> dict[str, Any]:
+        return await rt.remove_telegram()
 
     @api.get("/conversations")
     def list_conversations(q: str = "") -> list[dict[str, Any]]:

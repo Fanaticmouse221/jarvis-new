@@ -6,6 +6,32 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · ChatGPT/Codex · Telegram checkpoint
+
+**Done:** private owner pairing with limited guesses, outbound long polling,
+queued shared-agent turns, independent approval callbacks and stop, phone-format
+replies, safe HTML fallback, token verification/persistence, protected API and
+Phone settings. Draft pull request: https://github.com/Fanaticmouse221/jarvis/pull/4.
+
+**Verified before Jack stopped testing:** full working-tree suite passed 175
+tests, including the new tool/reminder modules being prepared for later commits;
+15 Telegram service tests and 2 protected API/token tests were covered. The extended
+browser run had also finished with 51 checks before testing stopped, including
+12 phone-flow checks. Its phone screenshots were not subsequently inspected.
+No live bot credentials were used.
+
+**Unverified / instruction:** Jack explicitly said "no need to test itll be fine
+stop testing". All further testing stopped; subsequent fixes and integration
+are implementation only, not a claim of a tested release. Owner/generation binding
+for asynchronous reminder sends and resilient unexpected-error handling were added
+after the last run. The extended browser
+runner is included for later use. OneDrive dependency locks were avoided by using
+an isolated temporary Python environment for the completed checks.
+
+**Next:** register the new tools, finish reminder/UI integration and release docs.
+
+---
+
 ## 10 Nov 2026, 11:00 AM · ChatGPT/Codex · plumbing checkpoint
 
 **Done:** created `codex/jarvis-2.1-reach` from merged `main`. Added schema v3,

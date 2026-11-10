@@ -5,6 +5,7 @@
 - Channel-aware conversations, dynamic tool risks and background service lifecycle.
 - Capability descriptions now follow the tools that are switched on.
 - Browser regression runner supports Windows and uses isolated test data.
+- Private Telegram phone chat, pairing, approval buttons and Phone settings.
 
 ## 2.0.0 (2026-11-10): a mind of its own
 

@@ -76,7 +76,7 @@ function renderList() {
       h(
         "div",
         { class: `conv${conversation.id === state.currentId ? " active" : ""}` },
-        h("button", { class: "conv-open", type: "button", text: conversation.title, title: conversation.title, onClick: () => openConversation(conversation.id) }),
+        h("button", { class: "conv-open", type: "button", text: `${conversation.source === "telegram" ? "📱 " : ""}${conversation.title}`, title: conversation.title, onClick: () => openConversation(conversation.id) }),
         remove,
       ),
     );

@@ -31,6 +31,8 @@ OUT = Path(sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(prefix="jarvis
 RUN, SHOTS, BIN = OUT / "run", OUT / "shots", OUT / "bin"
 MARKER = OUT / "marker.txt"
 APP, MOCK = "http://127.0.0.1:8765", "http://127.0.0.1:8799"
+TELEGRAM = "http://127.0.0.1:8798"
+TELEGRAM_TOKEN = "123456:telegram_e2e_fake_token_1234567890"
 KEY = "gsk_e2e_valid_key_123456"
 CHROME = os.environ.get("CHROME") or next((str(p) for p in (
     Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
@@ -63,6 +65,7 @@ def start_jarvis() -> subprocess.Popen:
     env = {k: v for k, v in os.environ.items() if not k.startswith(("JARVIS_", "TELEGRAM_")) and k not in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY")}
     env.update(
         JARVIS_GROQ_BASE_URL=f"{MOCK}/v1",
+        JARVIS_TELEGRAM_API=TELEGRAM,
         JARVIS_DB_PATH=str(RUN / "jarvis.db"),
         JARVIS_WORKSPACE=str(RUN / "workspace"),
         JARVIS_E2E_MARKER=str(MARKER),
@@ -95,6 +98,29 @@ def last_turn(page: Page):
     return page.locator(".turn.assistant").last
 
 
+def telegram_update(update: dict) -> None:
+    request = urllib.request.Request(TELEGRAM + "/_updates", data=json.dumps(update).encode(), headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(request, timeout=5).close()
+
+
+def telegram_message(text: str, owner: int = 42) -> None:
+    telegram_update({"message": {"chat": {"id": owner, "type": "private"}, "from": {"id": owner, "is_bot": False}, "text": text}})
+
+
+def telegram_seen() -> list[dict]:
+    return json.load(urllib.request.urlopen(TELEGRAM + "/_seen", timeout=5))
+
+
+def wait_telegram(predicate, timeout: float = 20):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        result = predicate(telegram_seen())
+        if result:
+            return result
+        time.sleep(0.1)
+    raise AssertionError("Timed out waiting for Telegram mock outcome")
+
+
 def main() -> None:
     if RUN.exists():
         raise RuntimeError("Choose a fresh output directory; browser checks never delete an existing run.")
@@ -109,6 +135,11 @@ def main() -> None:
         cwd=REPO, stdout=open(OUT / "mock.log", "w"), stderr=subprocess.STDOUT,
     )
     wait_http(MOCK + "/_seen")
+    telegram = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "tests.e2e.mock_telegram:app", "--port", "8798", "--log-level", "warning"],
+        cwd=REPO, stdout=open(OUT / "telegram.log", "w"), stderr=subprocess.STDOUT,
+    )
+    wait_http(TELEGRAM + "/_seen")
     jarvis = start_jarvis()
     errors: list[str] = []
     try:
@@ -267,6 +298,59 @@ def main() -> None:
             status = page.evaluate("fetch('/api/bootstrap').then(r => r.status)")
             check(status == 401, "the API rejects requests that don't carry the session token")
 
+            print("Telegram phone link: setup, owner chat, and approval buttons")
+            page.click(".rail-item[data-nav=settings]")
+            page.wait_for_selector("input[aria-label='Telegram bot token']")
+            phone_section = page.locator(".section", has=page.locator("input[aria-label='Telegram bot token']"))
+            token_input = page.locator("input[aria-label='Telegram bot token']")
+            check(token_input.get_attribute("type") == "password", "the Telegram token entry is masked")
+            token_input.fill("654321:rejected_telegram_token_1234567890")
+            page.get_by_role("button", name="Connect bot", exact=True).click()
+            page.wait_for_selector(".toast.error:has-text('rejected')")
+            check("TELEGRAM_BOT_TOKEN=" not in (RUN / ".env").read_text(), "a rejected Telegram token is not saved")
+            token_input.fill(TELEGRAM_TOKEN)
+            page.get_by_role("button", name="Connect bot", exact=True).click()
+            page.wait_for_selector(".pairing-code")
+            check(token_input.input_value() == "" and "7890" in token_input.get_attribute("placeholder"), "connected bot shows only the token ending")
+            check("not end-to-end encrypted" in page.inner_text(".page"), "phone setup explains Telegram privacy and the running-PC requirement")
+            code = page.inner_text(".pairing-code")
+            telegram_message(code)
+            page.wait_for_selector(".phone-state strong:has-text('Phone linked')", timeout=15000)
+            check(not page.locator(".pairing-code").count(), "successful pairing hides the pairing code")
+            page.get_by_role("button", name="Send test message", exact=True).click()
+            wait_telegram(lambda rows: any("Systems online" in row["body"].get("text", "") for row in rows))
+            check(True, "the Phone test button sends through the real HTTP client to the Telegram stand-in")
+            shot("13-phone-linked")
+            before_stranger = len(telegram_seen())
+            telegram_message("Open everything", owner=99)
+            time.sleep(0.6)
+            check(len(telegram_seen()) == before_stranger, "an unpaired stranger is silently ignored")
+            telegram_message("What do you know about me?")
+            wait_telegram(lambda rows: any(all(word in row["body"].get("text", "") for word in ("chemistry", "left-handed", "worked solutions")) for row in rows))
+            check(True, "a Telegram reply uses the same saved memories")
+            if MARKER.exists():
+                MARKER.unlink()
+            telegram_message("open e2e-marker-app")
+            approval = wait_telegram(lambda rows: next((row["body"] for row in reversed(rows) if "reply_markup" in row["body"]), None))
+            check(not MARKER.exists(), "a phone action waits for its inline approval button")
+            callback_data = approval["reply_markup"]["inline_keyboard"][0][0]["callback_data"]
+            # The mock gives monotonically increasing ids to every successful sendMessage.
+            approval_message_id = sum(row["method"] == "sendMessage" for row in telegram_seen())
+            telegram_update({"callback_query": {"id": "e2e-approval", "from": {"id": 42}, "data": callback_data, "message": {"message_id": approval_message_id, "chat": {"id": 42, "type": "private"}}}})
+            wait_telegram(lambda rows: any(row["method"] == "editMessageText" and row["body"].get("text") == "Allowed." for row in rows))
+            wait_telegram(lambda rows: MARKER.exists())
+            check(MARKER.exists(), "the Telegram approval button releases the real marker-program launch")
+            telegram_message("/new")
+            wait_telegram(lambda rows: any("Fresh conversation" in row["body"].get("text", "") for row in rows))
+            check(True, "/new starts a fresh Telegram conversation")
+            page.goto(APP + "/#/")
+            page.reload()
+            page.wait_for_selector(".conv-open:has-text('📱')")
+            check(page.locator(".conv-open:has-text('📱')").count() == 1, "Telegram conversations appear with a phone icon in the PC sidebar")
+            page.locator(".conv-open:has-text('📱')").click()
+            page.wait_for_selector(".turn.user")
+            shot("14-phone-conversation")
+
             print("Mobile layout")
             phone = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
             phone.on("pageerror", lambda e: errors.append(f"mobile pageerror: {e}"))
@@ -283,8 +367,10 @@ def main() -> None:
     finally:
         jarvis.terminate()
         mock.terminate()
+        telegram.terminate()
         jarvis.wait(timeout=15)
         mock.wait(timeout=15)
+        telegram.wait(timeout=15)
     print(f"\n{len(passed)} checks passed. Screenshots: {SHOTS}")
 
 

@@ -157,3 +157,13 @@ framework, permissions and outside-content rule they need are already in place.
 which makes JARVIS feel like a program rather than a tab. Falls back to the
 default browser. Edge's built-in natural voices are also the best free option
 for spoken replies in 2.1.
+
+### D24. Telegram phone access via outbound long polling (2026-11-10)
+Jack chose Telegram. Plain httpx talks to the [Bot API](https://core.telegram.org/bots/api)
+with outbound requests only; the local web server stays on localhost. One private
+chat pairs with a short-lived local code; strangers and group chats are ignored.
+Approval buttons and /stop bypass the serial message queue. Bot credentials live
+only in .env and are redacted from HTTP logs. Phone replies use the same agent,
+memory, personality and permissions. Bot chats are not end-to-end encrypted and
+the PC must remain on. Telegram service behaviour was checked with a fake API;
+a live phone link remains unverified.

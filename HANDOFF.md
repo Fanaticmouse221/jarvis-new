@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`codex/jarvis-2.1-reach`**, from current `main` after the handoff branch was merged. |
-| On that branch so far | Item 1 plumbing complete: schema v3, channel-aware turns, per-call risk, capability-aware prompt, background lifecycle. Telegram and tools are being developed next. |
-| Tests | Plumbing checkpoint: `uv run pytest -q`: 76 passing. Chrome browser run: 39 checks passing on Windows; desktop and mobile screenshots inspected. |
+| On that branch so far | Items 1–2 implemented: shared plumbing and Telegram phone access, protected endpoints and Phone settings. More tools and reminders are next. Draft PR #4. |
+| Tests | Before Jack asked to stop testing: 175 tests passed in the working tree; a 51-check browser run completed (latest phone screenshots uninspected). Later fixes and integration changes are unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -129,7 +129,7 @@ you find a real problem, and record any change in `docs/DECISIONS.md`.
   tasks (Telegram poller, reminder scheduler). `TestClient` used without `with`
   doesn't run lifespan, which keeps existing tests unaffected.
 
-### [ ] 2. Telegram phone link (Jack's top request)
+### [x] 2. Telegram phone link (Jack's top request)
 - New `jarvis/telegram.py`. Plain `httpx`, no bot library. **Long polling**
   (`getUpdates`, timeout 25 s, `allowed_updates=["message","callback_query"]`):
   outbound requests only, so no port is opened and nothing is exposed to the internet.
