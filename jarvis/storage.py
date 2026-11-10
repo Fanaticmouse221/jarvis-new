@@ -597,6 +597,43 @@ class Store:
             row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
         return dict(row)
 
+    def update_todo(
+        self,
+        todo_id: int,
+        *,
+        title: str | None = None,
+        details: str | None = None,
+        due_at: str | None = None,
+    ) -> dict[str, Any] | None:
+        if title is None and details is None and due_at is None:
+            raise ValueError("Provide a title, details or due date to change.")
+        if title is not None:
+            title = title.strip()
+            if not title:
+                raise ValueError("A to-do needs a title.")
+            if len(title) > 500:
+                raise ValueError("To-do titles are limited to 500 characters.")
+        if details is not None:
+            details = details.strip()
+            if len(details) > 2000:
+                raise ValueError("To-do details are limited to 2,000 characters.")
+        normalised_due = self._normalise_todo_due(due_at) if due_at is not None else None
+        fields: list[str] = []
+        values: list[Any] = []
+        for name, value in (("title", title), ("details", details), ("due_at", normalised_due)):
+            if value is not None:
+                fields.append(f"{name} = ?")
+                values.append(value)
+        fields.append("updated_at = ?")
+        values.append(utc_now())
+        values.append(todo_id)
+        with self._connect() as conn:
+            changed = conn.execute(f"UPDATE todos SET {', '.join(fields)} WHERE id = ?", values)
+            if not changed.rowcount:
+                return None
+            row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
+        return dict(row)
+
     def delete_todo(self, todo_id: int) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()

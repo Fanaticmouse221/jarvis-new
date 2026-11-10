@@ -38,7 +38,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
-| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos with optional due dates and approval-gated deletion, approval-aware close/move/delete tools and safer process matching are covered by 186 automated tests and a 63-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
+| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable editable to-dos with optional due dates and approval-gated deletion, approval-aware close/move/delete tools and safer process matching are covered by 187 automated tests and a 63-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 
@@ -96,7 +96,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [ ] Wake phrase investigated after the basics are solid
 
 ### 2.3 Tasks
-- [x] Durable to-dos with add, list, complete, reopen, due dates and approval-gated deletion
+- [x] Durable to-dos with add, list, complete, reopen, edit, due dates and approval-gated deletion
 - [x] To-dos page with direct add, completion controls and due-date display
 - [x] Closing apps; moving/deleting files with approval
 - [x] Safer application process matching and automatic update before startup

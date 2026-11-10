@@ -6,6 +6,23 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Editable to-dos
+
+**Done:** added durable `edit_todo` support for changing a to-do's title,
+details or due date. The storage layer validates and normalises each supplied
+field, the agent exposes it as a normal reversible action, and the fake model
+recognises simple rename/edit phrasing.
+
+**Verified:** `uv run pytest -q` passed **187 tests**. The browser regression
+passed **63 checks** with no console errors or warnings. Python syntax checks
+and `git diff --check` passed.
+
+**Unverified:** natural-language editing with a live model still needs a real
+Groq check.
+
+**Next:** commit and merge this task improvement, then begin the durable
+multi-step-plan foundation.
+
 ## 10 Nov 2026 · GitHub Copilot · Handoff synchronisation
 
 **Done:** synchronised the handoff, roadmap, architecture, changelog and work
