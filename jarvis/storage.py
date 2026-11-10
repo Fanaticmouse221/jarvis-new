@@ -731,6 +731,19 @@ class Store:
             result.append(item)
         return result
 
+    def get_plan(self, plan_id: int) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            plan = conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+            if plan is None:
+                return None
+            steps = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? ORDER BY position", (plan_id,)
+            ).fetchall()
+        result = dict(plan)
+        result["steps"] = [dict(step) for step in steps]
+        result["next_step"] = next((dict(step) for step in steps if step["status"] == "pending"), None)
+        return result
+
     def update_plan_step(
         self, plan_id: int, position: int, status: str
     ) -> dict[str, Any] | None:
