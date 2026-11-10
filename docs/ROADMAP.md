@@ -70,20 +70,27 @@ Status words used here, and nowhere more generously than the evidence allows:
 
 ## Next
 
-### 2.1 Voice
+> The order changed on 10 November 2026 at Jack's request: phone access and more
+> abilities come first. The detailed, current plan is in [`HANDOFF.md`](../HANDOFF.md).
+
+### 2.1 Reach: phone, web, files, reminders (in progress on branch `jarvis-2.1`)
+- [ ] Message JARVIS from a phone through a private Telegram bot, with approval buttons
+- [ ] Web search and page reading with sources
+- [ ] Weather, calculator
+- [ ] Files: find, read (text, Word, PowerPoint, PDF), create in folders Jack approves; overwriting always asks
+- [ ] Reminders, delivered in the app, on the phone and as a Windows notification
+- [ ] Media, volume and screen lock on the PC
+
+### 2.2 Voice
 - [ ] Microphone button and hands-free mode with silence detection
 - [ ] Speech-to-text through Groq's hosted Whisper (free tier: 20 requests a minute, 2,000 a day)
 - [ ] Spoken replies using the natural British voices built into Edge, sentence by sentence
 - [ ] Interrupt by key or tap; listening / thinking / speaking shown by the Core
+- [ ] Voice notes sent through Telegram
 - [ ] Wake phrase investigated after the basics are solid
 
-### 2.2 Reach: web research and files
-- [ ] Web search and page reading with sources (free, keyless search with a Wikipedia fallback)
-- [ ] Files: find, read, create in folders Jack approves; overwrite and delete always ask
-- [ ] Read PDFs and Word documents
-
-### 2.3 Tasks and reminders
-- [ ] To-dos and timed reminders, with notifications
+### 2.3 Tasks
+- [ ] To-dos; closing apps; moving and deleting files with approval
 
 ### 3.0 and beyond
 - [ ] Multi-step work with visible plans that survives restarts
