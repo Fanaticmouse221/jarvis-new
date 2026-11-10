@@ -84,11 +84,11 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 
 | | |
 |---|---|
-| Released | **v2.1.0** release pass complete on this branch; [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) is open and awaits merge |
+| Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | Items 1–5 complete: Reach implementation, Settings/browser coverage, release metadata and handoff documentation. |
-| Tests | `uv run pytest -q`: **176 passed**. Browser regression: **55 checks passed**, screenshots inspected. Live Groq, Telegram and Windows toast checks remain unverified. |
+| On that branch so far | 2.2 voice slice implemented: browser microphone capture, Groq Whisper transcription route and automatic spoken replies. |
+| Tests | `uv run pytest -q`: **178 passed**. Browser regression: **56 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission and speech quality remain unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -211,7 +211,13 @@ brain and the browser run can exercise them.
   `.env.example`, and this file.
 - Open or update the pull request; tell Jack to merge it, run `update.bat`, and what to try.
 
-### After 2.1
+### [x] 6. Voice foundation
+- `POST /api/transcribe` accepts bounded browser audio and calls Groq Whisper.
+- The Chat composer has a microphone button and sends the transcript through the
+  existing conversation path.
+- Voice-originated replies are spoken with browser speech synthesis.
+
+### What to do next: finish version 2.2 "Voice"
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.

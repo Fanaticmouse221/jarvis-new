@@ -10,10 +10,10 @@ const $ = (id) => document.getElementById(id);
 const els = {
   sidebar: $("sidebar"), scrim: $("scrim"), menuBtn: $("menuBtn"), newChat: $("newChat"), search: $("searchInput"),
   list: $("conversationList"), title: $("title"), thread: $("thread"), composer: $("composer"), input: $("input"),
-  send: $("send"), modelSelect: $("modelSelect"), exportBtn: $("exportBtn"),
+  send: $("send"), voice: $("voiceBtn"), modelSelect: $("modelSelect"), exportBtn: $("exportBtn"),
 };
 
-const state = { ctx: null, conversations: [], currentId: null, streaming: false, controller: null, core: null };
+const state = { ctx: null, conversations: [], currentId: null, streaming: false, controller: null, core: null, recorder: null, voiceReply: false };
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -580,12 +580,17 @@ async function send(text, { regenerate: again = false, editId = null } = {}) {
       else if (event.type === "status") turn.status(event.text);
       else if (event.type === "done") {
         turn.finish(event.message);
+        if (state.voiceReply && event.message && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(new SpeechSynthesisUtterance(event.message));
+        }
         settled = finished = true;
       } else if (event.type === "error") {
         turn.fail(event.message);
         settled = true;
       }
     }
+
     if (!settled) turn.fail("The connection closed before JARVIS finished replying.");
   } catch (error) {
     if (error.name === "AbortError") {
@@ -599,6 +604,54 @@ async function send(text, { regenerate: again = false, editId = null } = {}) {
     setStreaming(false);
     loadConversations();
     if (finished && state.ctx.boot.prefs.memory_enabled) watchForLearning(turn);
+  }
+}
+
+async function toggleVoice() {
+  if (state.recorder) {
+    state.recorder.stop();
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    toast("Voice recording is not supported by this browser.", "error");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    state.recorder = recorder;
+    state.voiceReply = true;
+    els.voice.classList.add("recording");
+    els.voice.setAttribute("aria-label", "Stop recording");
+    recorder.addEventListener("dataavailable", (event) => { if (event.data.size) chunks.push(event.data); });
+    recorder.addEventListener("stop", async () => {
+      stream.getTracks().forEach((track) => track.stop());
+      state.recorder = null;
+      state.voiceReply = true;
+      els.voice.classList.remove("recording");
+      els.voice.setAttribute("aria-label", "Record a voice message");
+      try {
+        const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        const data = await api("/transcribe", {
+          method: "POST",
+          body: blob,
+          headers: { "Content-Type": blob.type, "X-Jarvis-Filename": "recording.webm" },
+        });
+        els.input.value = data.text;
+        autosize();
+        els.composer.requestSubmit();
+      } catch (error) {
+        state.voiceReply = false;
+        toast(error.message, "error");
+      }
+    });
+    recorder.start();
+    toast("Listening...");
+  } catch (error) {
+    state.recorder = null;
+    state.voiceReply = false;
+    toast(error.name === "NotAllowedError" ? "Microphone access was denied." : error.message, "error");
   }
 }
 
@@ -683,6 +736,7 @@ export function initChat(ctx) {
   els.scrim.addEventListener("click", () => openSidebar(false));
   els.title.addEventListener("click", startRename);
   els.exportBtn.addEventListener("click", exportConversation);
+  els.voice.addEventListener("click", toggleVoice);
   els.search.addEventListener("input", debounce(loadConversations, 250));
   els.modelSelect.addEventListener("change", () => {
     try {

@@ -155,6 +155,7 @@ def main() -> None:
             print("First run: connecting a model")
             page.goto(APP + "/")
             page.wait_for_selector(".setup")
+            check(page.locator("#voiceBtn").count() == 1, "the chat composer exposes a microphone button")
             check("Connect a model" in page.inner_text(".setup"), "first run shows the setup panel, not a dead chat box")
             check("warn" in page.get_attribute("#railStatus .dot", "class"), "status light is amber while no model is ready")
             shot("01-first-run")

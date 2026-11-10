@@ -118,6 +118,7 @@ class Settings:
     workspace: Path = field(default_factory=default_workspace)
     telegram_bot_token: str = field(default="", repr=False)
     telegram_api: str = "https://api.telegram.org"
+    transcription_model: str = "whisper-large-v3-turbo"
 
     max_history_messages: int = 24
     max_context_chars: int = 6000
@@ -164,6 +165,7 @@ class Settings:
             workspace=workspace,
             telegram_bot_token=env("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_api=env("JARVIS_TELEGRAM_API", "https://api.telegram.org").rstrip("/"),
+            transcription_model=env("JARVIS_TRANSCRIPTION_MODEL", "whisper-large-v3-turbo").strip() or "whisper-large-v3-turbo",
             max_history_messages=_int(env("JARVIS_MAX_HISTORY_MESSAGES"), 24),
             max_context_chars=_int(env("JARVIS_MAX_CONTEXT_CHARS"), 6000),
         )

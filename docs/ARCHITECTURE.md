@@ -1,4 +1,4 @@
-# Architecture (v2.1)
+# Architecture (v2.2)
 
 JARVIS is one Python process. A FastAPI server serves the interface, keeps
 everything in a single SQLite file and talks to language models through a
@@ -141,3 +141,14 @@ upgrades in place.
 | 2.2 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
 | 2.3 Tasks | to-dos and more file actions | task state, approval-aware tools |
 | 3.0 | longer multi-step work that survives restarts | task state in `agent.py` |
+
+## Voice
+
+The browser records microphone input with `MediaRecorder` and posts the audio
+blob to the protected `/api/transcribe` route. The server sends it to Groq's
+hosted Whisper endpoint using the existing Groq key; no audio is stored in
+SQLite. The returned transcript is inserted into the ordinary chat composer, so
+memory, personality, tools, permissions and approvals remain exactly the same.
+After a voice-originated reply, the browser uses its built-in speech synthesis
+to speak the final text. Telegram voice notes, interruption and silence
+detection are later additions, not separate agent paths.

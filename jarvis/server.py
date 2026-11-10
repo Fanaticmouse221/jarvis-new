@@ -318,6 +318,19 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    @api.post("/transcribe")
+    async def transcribe(request: Request) -> dict[str, str]:
+        audio = await request.body()
+        try:
+            text = await rt.transcribe_audio(
+                audio,
+                request.headers.get("x-jarvis-filename", "recording.webm"),
+                request.headers.get("content-type", "audio/webm"),
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        return {"text": text}
+
     @api.post("/approvals/{approval_id}")
     def resolve_approval(approval_id: str, body: ApprovalRequest) -> dict[str, bool]:
         if not rt.approvals.resolve(approval_id, body.approve, body.always):
