@@ -405,6 +405,7 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
             "memory": {"enabled": prefs["memory_enabled"], "auto_learn": prefs["auto_learn"]},
             "apps": {"backend": rt.launcher.backend},
             "local_only": local_only,
+            "workspace": str(rt.settings.workspace),
         }
 
     @api.post("/shutdown")

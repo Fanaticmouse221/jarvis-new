@@ -87,7 +87,7 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`codex/jarvis-2.1-reach`**, from current `main` after the handoff branch was merged. |
-| On that branch so far | Items 1–2 implemented: shared plumbing and Telegram phone access, protected endpoints and Phone settings. More tools and reminders are next. Draft PR #4. |
+| On that branch so far | Items 1–3 implemented: shared plumbing, Telegram and nine new tools with approved-folder and home-city settings. Reminders and release docs are next. Draft PR #4. |
 | Tests | Before Jack asked to stop testing: 175 tests passed in the working tree; a 51-check browser run completed (latest phone screenshots uninspected). Later fixes and integration changes are unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
@@ -171,7 +171,7 @@ you find a real problem, and record any change in `docs/DECISIONS.md`.
   pairing, wrong codes, strangers ignored, a full message → reply, an approval
   via buttons, `/new`, HTML fallback, long-message splitting.
 
-### [ ] 3. New tools (each in `jarvis/tools/`, with a risk level and tests)
+### [x] 3. New tools (each in `jarvis/tools/`, with a risk level and tests)
 | Tool | Risk | Notes |
 |---|---|---|
 | `web_search(query)` | read, **untrusted output** | Use the `ddgs` package (keyless metasearch, MIT, v9.16 Oct 2026). Return top 5: title, link, snippet (≤ ~900 chars total). |

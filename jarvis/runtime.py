@@ -49,7 +49,8 @@ class Runtime:
         self.registry = build_registry()
         self.approvals = ApprovalBroker()
         self.launcher = launcher or default_launcher()
-        self.services: dict[str, Any] = {"memory": self.memory, "store": self.store, "launcher": self.launcher}
+        self.services: dict[str, Any] = {"memory": self.memory, "store": self.store, "launcher": self.launcher,
+                                         "settings": settings, "prefs": self.prefs}
 
         self._fixed_router = router  # tests inject one
         self.router: ModelRouter = router or self._build_router()
@@ -165,6 +166,7 @@ class Runtime:
     def _apply_settings(self, settings: Settings) -> None:
         self.settings = settings
         self.agent.settings = settings
+        self.services["settings"] = settings
         self.reload_router()
 
     async def list_provider_models(self, provider: str, key: str | None = None) -> list[str]:

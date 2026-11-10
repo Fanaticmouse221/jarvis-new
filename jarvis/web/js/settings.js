@@ -196,6 +196,12 @@ export async function renderSettings(page, ctx) {
   );
 
   // ----- permissions -----
+  const folders = h("textarea", { class: "textarea", rows: 3, value: prefs.allowed_folders.join("\n"), placeholder: "One full folder path per line", "aria-label": "Approved folders" });
+  const saveFolders = h("button", { class: "btn", type: "button", text: "Save folders", onClick: () => save({ allowed_folders: folders.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }) });
+  const places = section("Folders and home city", "Files stay inside these folders. Credentials and private keys are always excluded; overwriting always asks first.",
+    h("p", { class: "hint", text: `Default workspace: ${status.workspace}` }),
+    row("Approved folders", "Add specific folders, one full path per line.", folders, saveFolders),
+    row("Home city", "Used for weather when you do not specify a place.", textSetting("home_city", "Brisbane, Australia")));
   const stepInput = h("input", { class: "input", type: "number", min: 1, max: 15, value: prefs.max_steps, style: "width: 90px" });
   stepInput.addEventListener("change", () => save({ max_steps: Number(stepInput.value) || 8 }));
   const toolRows = tools.map((tool) => {
@@ -245,5 +251,5 @@ export async function renderSettings(page, ctx) {
     ),
   );
 
-  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, phoneSection(), personality, modelsSection, permissions, data);
+  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, phoneSection(), personality, modelsSection, places, permissions, data);
 }

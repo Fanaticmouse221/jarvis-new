@@ -6,7 +6,7 @@ import pytest
 from jarvis.persona import build_system_prompt
 from jarvis.storage import MIGRATIONS, Store
 from jarvis.tools import RISK_ACT, RISK_READ, RISK_SENSITIVE, Tool, ToolContext, ToolError, ToolResult
-from jarvis.tools.base import obj
+from jarvis.tools.base import obj, validate_args
 
 from conftest import call, run_turn, scripted_runtime, steps, text
 
@@ -138,3 +138,21 @@ def test_missing_capabilities_follow_enabled_tools(runtime):
     disabled = build_system_prompt(runtime.prefs.all(), tool_names=["remember"])
     assert "browse the web" in disabled and "read files" in disabled and "set reminders" in disabled
     assert "Write maths in LaTeX" in disabled
+
+
+def test_file_content_whitespace_is_preserved_without_model_schema_extension():
+    schema = obj({"content": {"type": "string", "preserveWhitespace": True, "maxLength": 100}}, ["content"])
+    for content in ("", " world", "\n    print('hello')\n"):
+        assert validate_args(schema, {"content": content}) == ({"content": content}, None)
+    assert validate_args(schema, {})[1] is not None
+    tool = make_dynamic_tool(None, None)
+    tool.parameters = schema
+    assert "preserveWhitespace" not in tool.schema()["function"]["parameters"]["properties"]["content"]
+    assert tool.parameters["properties"]["content"]["preserveWhitespace"]
+
+
+def test_numeric_tool_arguments_reject_non_finite_and_invalid_values():
+    schema = obj({"minutes": {"type": "number", "minimum": 0, "maximum": 100}})
+    assert validate_args(schema, {"minutes": "2.5"}) == ({"minutes": 2.5}, None)
+    for value in (True, float("nan"), float("inf"), "invalid", [], -1, 101, 10 ** 1000):
+        assert validate_args(schema, {"minutes": value})[1] is not None

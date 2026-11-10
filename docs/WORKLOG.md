@@ -6,6 +6,24 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · ChatGPT/Codex · new tools checkpoint
+
+**Done:** registered search, public page reading with pinned DNS/redirect checks,
+weather, calculator, approved-folder file tools and Windows media/volume/lock.
+Added Home city and Folders settings, compact schemas and demo phrases. Overwrite
+always requests approval; file text preserves whitespace. pypdf and ddgs are the
+only new direct dependencies. Reminder tools are wired in the next checkpoint.
+
+**Evidence / limits:** earlier 67 tool tests and live read-only search/page/weather
+probes passed. A later PDF resource-limit test exposed an invalid blank-PDF fixture;
+its fixture was corrected statically. That correction, final PDF limits, registration
+and UI integration are unverified because Jack asked to stop all testing. Windows
+controls used fakes only; no real lock or volume command was issued.
+
+**Next:** integrate scheduler, reminders list, durable app notices, then release docs.
+
+---
+
 ## 10 Nov 2026 · ChatGPT/Codex · Telegram checkpoint
 
 **Done:** private owner pairing with limited guesses, outbound long polling,
