@@ -29,6 +29,9 @@ async def list_plans(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     lines = []
     for plan in plans:
         lines.append(f"Plan #{plan['id']} [{plan['status']}] {plan['title']}")
+        if plan.get("running_step"):
+            step = plan["running_step"]
+            lines.append(f"  In progress: {step['position']}. {step['title']} (attempt {step['execution_attempts']})")
         if plan.get("next_step"):
             lines.append(f"  Next: {plan['next_step']['position']}. {plan['next_step']['title']}")
         for step in plan["steps"]:
@@ -43,12 +46,53 @@ async def resume_plan(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
         raise ToolError("That plan was not found. Use list_plans to check its number.")
     if plan["next_step"] is None:
         return ToolResult(True, f"Plan #{plan['id']} is complete: {plan['title']}", data={"plan": plan})
+    if plan.get("running_step"):
+        step = plan["running_step"]
+        return ToolResult(
+            True,
+            f"Plan #{plan['id']} has an interrupted step: {step['position']}. {step['title']} "
+            f"(attempt {step['execution_attempts']}). Reclaim it with begin_plan_step.",
+            data={"plan": plan},
+        )
     step = plan["next_step"]
     return ToolResult(
         True,
         f"Next step for plan #{plan['id']} ({plan['title']}): {step['position']}. {step['title']}",
         data={"plan": plan},
     )
+
+
+async def begin_plan_step(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    try:
+        plan = ctx.services["store"].claim_plan_step(args["plan_id"])
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+    if plan is None:
+        raise ToolError("That plan was not found. Use list_plans to check its number.")
+    if plan["next_step"] is None:
+        return ToolResult(True, f"Plan #{plan['id']} is already complete: {plan['title']}", data={"plan": plan})
+    step = plan["next_step"]
+    return ToolResult(
+        True,
+        f"Started plan #{plan['id']} step {step['position']}: {step['title']} "
+        f"(attempt {step['execution_attempts']}). Finish it with complete_plan_step.",
+        data={"plan": plan, "execution_token": plan.get("execution_token")},
+    )
+
+
+async def complete_plan_step(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    try:
+        plan = ctx.services["store"].finish_plan_step(
+            args["plan_id"], args["step"], args["token"], success=args["success"], error=args.get("error")
+        )
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+    if plan is None:
+        raise ToolError("That plan step was not found. Use list_plans to check the plan and step number.")
+    step = next((item for item in plan["steps"] if item["position"] == args["step"]), None)
+    if args["success"]:
+        return ToolResult(True, f"Completed plan #{plan['id']} step {args['step']}: {step['title']}", data={"plan": plan})
+    return ToolResult(True, f"Plan #{plan['id']} step {args['step']} failed and can be retried.", data={"plan": plan})
 
 
 async def change_plan_status(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
@@ -127,6 +171,35 @@ TOOLS = [
         RISK_READ,
         resume_plan,
         lambda a: f"Resume plan #{a.get('plan_id', '?')}",
+    ),
+    Tool(
+        "begin_plan_step",
+        "tasks",
+        "Begin a plan step",
+        "Claim the next plan step, safely reclaiming an interrupted attempt.",
+        obj({"plan_id": {"type": "integer", "minimum": 1}}, ["plan_id"]),
+        RISK_ACT,
+        begin_plan_step,
+        lambda a: f"Begin next step of plan #{a.get('plan_id', '?')}",
+    ),
+    Tool(
+        "complete_plan_step",
+        "tasks",
+        "Complete a plan step",
+        "Record whether a claimed plan step succeeded, using its execution token.",
+        obj(
+            {
+                "plan_id": {"type": "integer", "minimum": 1},
+                "step": {"type": "integer", "minimum": 1},
+                "token": {"type": "string", "minLength": 1, "maxLength": 64},
+                "success": {"type": "boolean"},
+                "error": {"type": "string", "maxLength": 1000},
+            },
+            ["plan_id", "step", "token", "success"],
+        ),
+        RISK_ACT,
+        complete_plan_step,
+        lambda a: f"{'Complete' if a.get('success') else 'Fail'} plan #{a.get('plan_id', '?')} step {a.get('step', '?')}",
     ),
     Tool(
         "change_plan_status",

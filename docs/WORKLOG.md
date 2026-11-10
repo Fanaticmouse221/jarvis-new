@@ -6,6 +6,23 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Restart-safe plan execution checkpoints
+
+**Done:** added schema v7 execution fields to plan steps, atomic claim/reclaim
+of the next pending step, attempt counts, failure recording and token-guarded
+completion. Added agent tools and protected API routes; the To-dos page reports
+an in-progress step.
+
+**Verified:** `uv run pytest -q` passed **195 tests**; the browser regression
+passed **68 checks**; Python and JavaScript syntax checks plus `git diff --check`
+passed.
+
+**Unverified:** automatic model-driven execution of arbitrary plan text, live
+Groq behaviour and Windows-only paths remain unverified.
+
+**Next:** commit and merge this checkpoint slice, then connect claimed steps to
+an agent turn without weakening memory, personality or approval guarantees.
+
 ## 10 Nov 2026 · GitHub Copilot · Visible plan resume state
 
 **Done:** plan list results and the To-dos page now show the next pending step,
