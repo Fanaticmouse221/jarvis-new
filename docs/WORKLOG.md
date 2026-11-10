@@ -6,6 +6,22 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Visible durable plans
+
+**Done:** added plan creation and persisted step controls to the To-dos page.
+The browser can now create a plan from one-step-per-line input and complete or
+reopen individual steps through the protected API.
+
+**Verified:** the full suite passed **193 tests**. The browser regression passed
+**65 checks** after a clean rerun, including plan creation and step completion.
+JavaScript syntax and `git diff --check` passed.
+
+**Unverified:** automatic model-driven execution and resume after an interrupted
+turn remain unbuilt.
+
+**Next:** commit and merge this interface slice, then continue with resumable
+execution state.
+
 ## 10 Nov 2026 · GitHub Copilot · Plan step state
 
 **Done:** added durable step completion and reopening through storage, the

@@ -31,6 +31,8 @@
   and are available through protected API and agent create/list tools.
 - Plan steps can now be completed or reopened, with the parent plan becoming
   completed only when every step is complete.
+- The To-dos page now shows durable plans, creates plans from one-step-per-line
+  input, and lets Jack complete or reopen persisted steps.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach
