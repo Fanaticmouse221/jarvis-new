@@ -162,7 +162,7 @@ def _matching_processes(tokens: set[str]) -> list[psutil.Process]:
     for process in psutil.process_iter(["name"]):
         try:
             name = process.info["name"] or ""
-            if any(token in re.sub(r"[^a-z0-9]", "", name.casefold()) for token in tokens):
+            if _process_matches(name, tokens):
                 matches.append(process)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
@@ -194,7 +194,24 @@ def _name_tokens(app: dict[str, str]) -> set[str]:
 
 
 def _matching(process_names: set[str], tokens: set[str]) -> list[str]:
-    return sorted(name for name in process_names if any(token in re.sub(r"[^a-z0-9]", "", name) for token in tokens))
+    return sorted(name for name in process_names if _process_matches(name, tokens))
+
+
+def _process_matches(process_name: str, tokens: set[str]) -> bool:
+    """Match distinctive app tokens without treating short fragments as app names."""
+    stem = re.sub(r"[^a-z0-9]", "", process_name.casefold())
+    if stem.endswith("exe"):
+        stem = stem[:-3]
+    return any(
+        len(token) >= 4
+        and (
+            stem == token
+            or stem.startswith(token)
+            or stem.endswith(token)
+            or (token in stem and len(stem) - len(token) <= 2)
+        )
+        for token in tokens
+    )
 
 
 async def open_app(args: dict[str, Any], ctx: ToolContext) -> ToolResult:

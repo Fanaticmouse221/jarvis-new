@@ -6,6 +6,25 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Safer application process matching
+
+**Done:** tightened the shared process matcher used by app opening
+confirmation and closing. It now strips executable suffixes, requires
+distinctive tokens and only permits short internal fragments when the process
+name is very close in length, reducing the chance that a generic app-name
+fragment targets an unrelated process. Added regression cases for valid
+`Code.exe`/`msedge.exe` matches and false positives such as `decoder.exe`.
+
+**Verified:** `uv run pytest -q` passed **184 tests**. The browser regression
+passed **62 checks** with no console errors or warnings. Python syntax checks
+and `git diff --check` passed.
+
+**Unverified:** real Windows process names and application close behaviour still
+need a check on Jack's PC; the browser run uses the injected launcher.
+
+**Next:** commit and merge this hardening, then continue with the next small
+2.3 or 3.0 slice.
+
 ## 10 Nov 2026 · GitHub Copilot · To-dos browser coverage
 
 **Done:** extended the browser regression to navigate the real To-dos page,
