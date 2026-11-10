@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.0 (in development): Voice
+
+- Added a browser microphone button that records audio locally and sends it to
+  the protected JARVIS server for Groq Whisper transcription.
+- Voice transcripts use the normal chat, memory and tool flow; replies are
+  spoken automatically with the browser's available speech synthesis voice.
+- Added listening, transcribing and speaking status feedback, tap-to-stop
+  recording, speech interruption, sustained-silence auto-stop and a two-minute
+  recording limit.
+- Added clear handling for missing keys, denied microphone access, empty or
+  oversized recordings, rate limits and provider failures.
+
 ## 2.1.0 (2026-11-10): Reach
 
 - Channel-aware conversations, dynamic tool risks and background service lifecycle.

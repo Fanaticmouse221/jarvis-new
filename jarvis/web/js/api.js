@@ -21,12 +21,13 @@ async function detail(response) {
   return `Request failed (HTTP ${response.status}).`;
 }
 
-async function request(path, { method = "GET", body, signal } = {}) {
-  const headers = { "X-Jarvis-Token": TOKEN };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+async function request(path, { method = "GET", body, signal, headers: extraHeaders = {} } = {}) {
+  const headers = { "X-Jarvis-Token": TOKEN, ...extraHeaders };
+  const raw = body instanceof Blob || body instanceof ArrayBuffer;
+  if (body !== undefined && !raw && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
   let response;
   try {
-    response = await fetch(`/api${path}`, { method, headers, signal, body: body === undefined ? undefined : JSON.stringify(body) });
+    response = await fetch(`/api${path}`, { method, headers, signal, body: body === undefined ? undefined : raw ? body : JSON.stringify(body) });
   } catch (error) {
     if (error.name === "AbortError") throw error;
     throw new ApiError("Can't reach JARVIS. Is it still running?", 0);

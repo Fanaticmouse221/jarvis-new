@@ -6,6 +6,50 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · voice controls checkpoint
+
+**Done:** extended the browser voice foundation with visible listening,
+transcribing and speaking status, tap-to-stop recording, speech interruption,
+automatic stop after 2.5 seconds of sustained silence, and a two-minute
+recording limit. Audio tracks and the analyser are cleaned up when recording
+ends or fails. Added a browser assertion for the status element.
+
+**Verified:** `node --check` passed for the browser JavaScript,
+`git diff --check` passed, `uv run pytest -q` passed **178 tests**, and the
+browser regression passed **57 checks** with no console errors or warnings.
+
+**Unverified:** real microphone permissions, silence thresholds across devices,
+live Groq Whisper access, transcription accuracy and speech quality still need
+Jack's Windows PC. Telegram voice notes are not implemented.
+
+**Next:** route Telegram voice notes through the same bounded transcription
+service, then run a real-world Windows voice check before calling 2.2 complete.
+
+---
+
+## 10 Nov 2026 · GitHub Copilot · voice foundation
+
+**Done:** added the first 2.2 voice slice. The browser microphone button records
+audio with `MediaRecorder`; the protected `/api/transcribe` route sends it to
+Groq Whisper without storing audio; the transcript enters the normal chat flow;
+and voice-originated replies are spoken automatically by browser speech
+synthesis. Added provider error handling, a configurable transcription model,
+and API tests.
+
+**Verified:** `uv run pytest -q` passed **178 tests**. The browser regression
+passed **56 checks** after fixing a voice initialisation issue; the browser
+asserts the microphone control exists and reported no console errors. `git diff
+--check` passed.
+
+**Unverified:** live Groq Whisper access, microphone permission behaviour,
+transcription accuracy, speech voice quality and Telegram voice notes require
+Jack's Windows PC and real credentials.
+
+**Next:** add recording-state feedback, interruption and silence detection, then
+send Telegram voice notes through the same transcription path.
+
+---
+
 ## 10 Nov 2026 · GitHub Copilot · 2.1 release pass
 
 **Done:** finished the Reach release metadata and interface coverage. Bumped the

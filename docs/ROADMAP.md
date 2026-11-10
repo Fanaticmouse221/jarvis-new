@@ -37,7 +37,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Approved-folder file tools | Built, needs a real-world check | Unit tests and browser run against test folders; Windows document associations remain unverified |
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
-| Voice | Not started | Milestone 2.2 |
+| Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
 | To-dos and more file actions | Not started | Milestone 2.3 |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
@@ -86,11 +86,12 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [x] Media, volume and screen lock on the PC
 - [x] Settings and browser regression coverage for the Reach interface
 
-### 2.2 Voice
-- [ ] Microphone button and hands-free mode with silence detection
-- [ ] Speech-to-text through Groq's hosted Whisper (free tier: 20 requests a minute, 2,000 a day)
-- [ ] Spoken replies using the natural British voices built into Edge, sentence by sentence
-- [ ] Interrupt by key or tap; listening / thinking / speaking shown by the Core
+### 2.2 Voice (in progress)
+- [x] Microphone button and protected browser transcription endpoint
+- [x] Speech-to-text through Groq's hosted Whisper (free tier: 20 requests a minute, 2,000 a day)
+- [x] Automatic spoken replies through browser speech synthesis
+- [x] Hands-free mode with sustained-silence detection and a two-minute recording limit
+- [x] Interrupt recording or speech by tapping the microphone control; listening / transcribing / speaking status is visible
 - [ ] Voice notes sent through Telegram
 - [ ] Wake phrase investigated after the basics are solid
 

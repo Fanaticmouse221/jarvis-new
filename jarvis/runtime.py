@@ -14,6 +14,8 @@ import time
 from collections import deque
 from typing import Any, Coroutine
 
+import httpx
+
 from jarvis.agent import Agent, ApprovalBroker
 from jarvis.config import KEY_ENV, Settings, save_api_key, save_telegram_token
 from jarvis.llm import ChatMessage, LLMError, ModelRouter
@@ -218,6 +220,41 @@ class Runtime:
         self._apply_settings(save_telegram_token(self.settings, token))
         await self.telegram.configure(self.settings.telegram_bot_token, bot=bot)
         return self.telegram.status()
+
+    async def transcribe_audio(self, audio: bytes, filename: str, content_type: str) -> str:
+        """Transcribe one browser recording through Groq's hosted Whisper API."""
+        key = self.settings.key_for("groq")
+        if not key:
+            raise ValueError("Add a Groq key in Settings before using the microphone.")
+        if not audio:
+            raise ValueError("The recording was empty.")
+        if len(audio) > 25 * 1024 * 1024:
+            raise ValueError("That recording is too large. Keep voice messages under 25 MB.")
+        base_url = base_url_for("groq", self.settings).rstrip("/")
+        headers = {"Authorization": f"Bearer {key}"}
+        files = {"file": (filename or "recording.webm", audio, content_type or "audio/webm")}
+        data = {"model": self.settings.transcription_model, "response_format": "json"}
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(90.0, connect=15.0)) as client:
+                response = await client.post(f"{base_url}/audio/transcriptions", headers=headers, files=files, data=data)
+        except httpx.TimeoutException as exc:
+            raise ValueError("Speech transcription timed out. Try a shorter recording.") from exc
+        except httpx.HTTPError as exc:
+            raise ValueError("Could not reach Groq for speech transcription.") from exc
+        if response.status_code != 200:
+            detail = response.text[:300]
+            if response.status_code in (401, 403):
+                raise ValueError("Groq rejected the key. Check it in Settings.")
+            if response.status_code == 429:
+                raise ValueError("Speech transcription is rate-limited. Try again shortly.")
+            raise ValueError(f"Speech transcription failed (HTTP {response.status_code}): {detail}")
+        try:
+            text = str(response.json().get("text") or "").strip()
+        except (ValueError, TypeError):
+            text = ""
+        if not text:
+            raise ValueError("No speech was detected in that recording.")
+        return text
 
     async def remove_telegram(self) -> dict[str, Any]:
         self._apply_settings(save_telegram_token(self.settings, None))
