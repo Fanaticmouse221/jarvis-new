@@ -4,22 +4,52 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 10:50 AM (Brisbane) by Claude.
+**Last updated:** 10 November 2026, 11:00 AM (Brisbane) by Claude.
 
-## How to hand this to another AI
+## How to hand this to another AI (Jack's steps)
 
-Paste this as your first message (attach or paste this whole file with it):
+The repository is **private**, so another AI can't open it from the link alone.
 
-> You are taking over development of my project JARVIS, a personal AI assistant.
-> The code is at https://github.com/Fanaticmouse221/jarvis. Read `HANDOFF.md`
-> (below), then `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` and
-> `docs/ROADMAP.md` in the repo. Continue from the "What to do next" section of
-> HANDOFF.md. Work on the branch named there, keep all tests passing, and update
-> `HANDOFF.md` and `docs/WORKLOG.md` before every commit. I'm an AI-assisted
-> developer, not a programmer: give me complete code and exact steps, ask one
-> question at a time, and never claim something works unless you tested it.
+1. Get the latest copy onto your PC: double-click `update.bat` in the `jarvis` folder.
+2. Give the AI the code, either way:
+   - **Easiest:** right-click the `jarvis` folder → *Compress to ZIP file* and upload
+     the zip. (The zip leaves out nothing secret you need to worry about except
+     `.env`, which holds your Groq key: delete `.env` from the zip, or tell the AI to ignore it.)
+   - **Or:** connect your GitHub account inside that AI (ChatGPT's Codex and
+     similar tools can then read and change the repo directly).
+3. Paste this as your first message:
 
-If the AI can't open GitHub itself, zip the `jarvis` folder from your PC and upload it.
+> You are taking over development of my project JARVIS, a personal AI assistant
+> (repo: github.com/Fanaticmouse221/jarvis, private). Read `HANDOFF.md` first,
+> then `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` and
+> `docs/ROADMAP.md`. Continue from the "What to do next" section of HANDOFF.md.
+> Keep all tests passing. Before you stop, follow "Handing back" in HANDOFF.md
+> so the next assistant can continue. I'm an AI-assisted developer, not a
+> programmer: give me complete files and exact steps, ask one question at a
+> time, and never claim something works unless you tested it.
+
+## Handing back (for whichever AI is working: do this before you stop)
+
+The next assistant, which may be Claude again, knows only what is in the repo.
+
+1. Update this file: "Last updated", "Current state", tick finished boxes, and
+   write under "What to do next" exactly where you stopped (file, function,
+   what is half-done, what you were about to try).
+2. Add an entry at the top of `docs/WORKLOG.md`: what changed, what you verified
+   and how, what is unverified, what comes next. Sign it with your name
+   (ChatGPT, Claude, Gemini…).
+3. Run `uv run pytest -q`. If something fails and you can't fix it, say so in
+   both files rather than leaving it for the next assistant to discover.
+4. Get the work onto GitHub:
+   - **If you can push:** commit to a branch, push, open a pull request for Jack to merge.
+   - **If you can't** (you only had a zip): give Jack every changed or new file
+     in full, with its path. Jack copies them into his `jarvis` folder and
+     double-clicks **`save-work.bat`**, which commits everything and pushes it.
+5. Tell Jack in plain words what you finished, what to test, and what is left.
+
+**Jack, to continue in Claude afterwards:** open the Jarvis project in Claude and
+say "Read HANDOFF.md and docs/WORKLOG.md in the repo and carry on." Claude reads
+the repository from GitHub, so make sure the other AI's work was pushed (step 4).
 
 ## The project in one minute
 
@@ -56,8 +86,8 @@ If the AI can't open GitHub itself, zip the `jarvis` folder from your PC and upl
 |---|---|
 | Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
-| Working branch | **`jarvis-2.1`** (pull request open as a draft) |
-| On that branch so far | Only this handoff system (HANDOFF.md, AGENTS.md, WORKLOG.md). **No 2.1 feature code has been written yet.** |
+| Working branch | **`jarvis-2.1`** (pull request open). If that pull request has already been merged, branch again from `main`. |
+| On that branch so far | Only this handoff system (HANDOFF.md, AGENTS.md, WORKLOG.md, save-work.bat). **No 2.1 feature code has been written yet.** |
 | Tests | `uv run pytest -q`: 67 passing on `main`. Browser run: 39 checks passing. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,

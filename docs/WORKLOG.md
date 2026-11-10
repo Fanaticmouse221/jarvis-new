@@ -6,7 +6,7 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
-## 10 Nov 2026, 10:50 AM · Claude · branch `jarvis-2.1`
+## 10 Nov 2026, 11:00 AM · Claude · branch `jarvis-2.1`
 
 **Done**
 - Jack installed 2.0 on his Windows PC. `setup.bat` ran (he first typed
@@ -18,8 +18,9 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
   checked"): Telegram Bot API, Tailscale, search providers, Open-Meteo, other
   model providers (GitHub Models retired; OpenAI API has no free tier).
 - Read the whole 2.0 codebase and wrote the design for 2.1 into `HANDOFF.md`.
-- Added the handoff system: `HANDOFF.md`, `AGENTS.md` (same rules as `CLAUDE.md`),
-  this log. Updated the roadmap order (2.1 is now phone + abilities; voice is 2.2).
+- Added the handoff system: `HANDOFF.md` (including how to hand over and how to
+  hand back), `AGENTS.md` (same rules as `CLAUDE.md`), this log, and
+  `save-work.bat` (commits and pushes everything, for when an AI can't push itself). Updated the roadmap order (2.1 is now phone + abilities; voice is 2.2).
 
 **Verified**
 - Nothing new to verify: this commit is documentation only. `main` is unchanged
@@ -27,6 +28,7 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 **Not done / unverified**
 - **No 2.1 feature code exists yet.** Start at item 1 of "What to do next" in `HANDOFF.md`.
+- `save-work.bat` is plain git commands but has not been run on Windows.
 - Still unconfirmed on Jack's PC: memory after a restart, opening apps, how the
   personality sounds with the real model.
 
