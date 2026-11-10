@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos and approved computer/file actions are implemented on this branch. |
-| Tests | `uv run pytest -q`: **183 passed**. Browser regression: **62 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos, approved computer/file actions and safer process matching are implemented on this branch. |
+| Tests | `uv run pytest -q`: **184 passed**. Browser regression: **62 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -244,8 +244,8 @@ brain and the browser run can exercise them.
 1. On Jack's PC, run a live-model check of natural task phrasing and verify
    voice separately when convenient; live Groq and microphone paths remain
    unverified here.
-2. Consider the next small 2.3 ability only after the current browser coverage
-   change is merged and the action slice has been tried on Windows.
+2. Consider the next small 2.3 ability only after this process-matching
+   hardening is merged and the action slice has been tried on Windows.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.

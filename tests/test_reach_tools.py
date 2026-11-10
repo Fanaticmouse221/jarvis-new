@@ -97,6 +97,13 @@ def test_close_app_uses_injected_launcher(ctx):
     assert result.ok and "Closed Notepad" in result.text
 
 
+def test_process_matching_requires_a_distinctive_name_boundary():
+    assert systems._process_matches("Code.exe", {"code"})
+    assert systems._process_matches("msedge.exe", {"edge"})
+    assert not systems._process_matches("decoder.exe", {"code"})
+    assert not systems._process_matches("app.exe", {"app"})
+
+
 def test_file_reads_are_paginated_and_untrusted(ctx):
     workspace = ctx.services["settings"].workspace
     (workspace / "long.txt").write_text("A" * 2600 + "ENDING", encoding="utf-8")
