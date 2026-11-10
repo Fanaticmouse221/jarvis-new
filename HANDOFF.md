@@ -87,7 +87,7 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`codex/jarvis-2.1-reach`**, from current `main` after the handoff branch was merged. |
-| On that branch so far | Items 1–3 implemented: shared plumbing, Telegram and nine new tools with approved-folder and home-city settings. Reminders and release docs are next. Draft PR #4. |
+| On that branch so far | Items 1–4 implemented, including persistent reminders, scheduler, phone delivery, app banners and a Settings reminders list. Release docs are next. PR #4. |
 | Tests | Before Jack asked to stop testing: 175 tests passed in the working tree; a 51-check browser run completed (latest phone screenshots uninspected). Later fixes and integration changes are unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
@@ -191,7 +191,7 @@ folders (the `allowed_folders` preference already exists) and for `home_city`.
 Teach `jarvis/llm/fake.py` (`scripted_reply`) a phrase per new tool so the demo
 brain and the browser run can exercise them.
 
-### [ ] 4. Reminders
+### [x] 4. Reminders
 - Scheduler: one asyncio task, every 15 s, picks `pending` reminders that are due.
 - Deliver to: (a) the app, through a small `GET /api/notices?after=` poll that
   shows a banner; (b) Telegram if linked (also append the reminder as an

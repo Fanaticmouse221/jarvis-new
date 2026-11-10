@@ -1,6 +1,6 @@
 """JARVIS's tools. `build_registry()` returns everything currently implemented."""
 
-from jarvis.tools import memory_tools, system_tools, file_tools, utility_tools, web_tools
+from jarvis.tools import memory_tools, system_tools, file_tools, utility_tools, web_tools, reminder_tools
 from jarvis.tools.base import (
     GROUPS,
     RISK_ACT,
@@ -17,7 +17,7 @@ from jarvis.tools.base import (
 
 def build_registry() -> ToolRegistry:
     registry = ToolRegistry()
-    registry.register(*memory_tools.TOOLS, *system_tools.TOOLS, *web_tools.TOOLS, *file_tools.TOOLS, *utility_tools.TOOLS)
+    registry.register(*memory_tools.TOOLS, *system_tools.TOOLS, *web_tools.TOOLS, *file_tools.TOOLS, *utility_tools.TOOLS, *reminder_tools.TOOLS)
     return registry
 
 

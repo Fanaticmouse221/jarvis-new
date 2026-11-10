@@ -9,6 +9,7 @@
 - Web search, bounded public-page reading, Open-Meteo weather and safe arithmetic.
 - Approved-folder document reading and text writing; overwrites always ask.
 - Windows media, volume and lock controls; approved folders and home-city settings.
+- Persistent repeating reminders with app banners, Telegram delivery and best-effort Windows notifications.
 
 ## 2.0.0 (2026-11-10): a mind of its own
 

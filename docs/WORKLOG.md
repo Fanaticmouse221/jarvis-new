@@ -6,6 +6,25 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · ChatGPT/Codex · reminders checkpoint
+
+**Done:** persistent one-off/daily/weekday/weekly reminders, 15-second scheduler,
+start-up delivery of missed reminders, durable app notices, linked-phone delivery
+with conversation context, and best-effort Windows toast. Added protected list,
+cancel and notices routes, Settings list, app banners, and demo reminder phrases.
+The outbox retains 500 occurrences, the app feed exposes the newest 200, and
+pending phone retries expire after seven days. Sends are bound to the paired owner.
+
+**Evidence / limits:** 13 earlier reminder unit tests passed; later focused plumbing
+and reminder run passed 22. Final owner/retention fixes and all integration/UI
+changes are unverified, as requested. Actual Windows toast delivery was not tried.
+Telegram cannot promise exactly-once sends if the process dies after sending but
+before recording its acknowledgement.
+
+**Next:** finish version 2.1 documentation and make PR #4 ready for review.
+
+---
+
 ## 10 Nov 2026 · ChatGPT/Codex · new tools checkpoint
 
 **Done:** registered search, public page reading with pinned DNS/redirect checks,

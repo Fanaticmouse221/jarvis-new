@@ -371,6 +371,22 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
 
     # ----- activity, tools, status -----------------------------------------
 
+    @api.get("/reminders")
+    def reminders() -> list[dict[str, Any]]:
+        return rt.reminders.list()
+
+    @api.delete("/reminders/{reminder_id}")
+    def cancel_reminder(reminder_id: int) -> dict[str, bool]:
+        if not rt.reminders.cancel(reminder_id):
+            raise HTTPException(404, "Pending reminder not found.")
+        return {"ok": True}
+
+    @api.get("/notices")
+    def notices(after: int = 0) -> dict[str, Any]:
+        recent = rt.reminders.notices()
+        return {"notices": [item for item in recent if item["seq"] > max(0, after)],
+                "seq": recent[-1]["seq"] if recent else 0}
+
     @api.get("/activity")
     def activity(limit: int = 200) -> dict[str, Any]:
         return {"runs": rt.store.list_tool_runs(min(max(limit, 1), 500)), "pending": rt.approvals.pending()}

@@ -4,6 +4,7 @@ import { api } from "./api.js";
 import { bootChanged, initChat, loadConversations, newConversation, openConversation } from "./chat.js";
 import { renderActivity, renderMemory } from "./pages.js";
 import { renderSettings } from "./settings.js";
+import { startReminderNotices } from "./reminders.js";
 import { h } from "./util.js";
 
 const app = document.getElementById("app");
@@ -82,6 +83,7 @@ async function start() {
   await initChat(ctx);
   window.addEventListener("hashchange", route);
   await route();
+  startReminderNotices();
   setInterval(() => ctx.refresh(), 60000);
 }
 

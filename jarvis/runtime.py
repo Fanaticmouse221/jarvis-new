@@ -21,6 +21,7 @@ from jarvis.llm.openai_compat import OpenAICompatProvider
 from jarvis.llm.router import GROQ_PREFERRED, base_url_for
 from jarvis.memory import Learner, Memory
 from jarvis.prefs import Prefs
+from jarvis.reminders import ReminderService
 from jarvis.storage import Store, utc_now
 from jarvis.telegram import TelegramService
 from jarvis.tools import build_registry
@@ -71,7 +72,9 @@ class Runtime:
         self.active: set[str] = set()  # conversations with a reply in progress
         self.token = self._load_token()
         self.telegram = TelegramService(self, token=settings.telegram_bot_token, api_base=settings.telegram_api)
-        self._background_services: list[Any] = [self.telegram]
+        self.reminders = ReminderService(self)
+        self.services["reminders"] = self.reminders
+        self._background_services: list[Any] = [self.telegram, self.reminders]
         self._running = False
 
     # ----- plumbing -------------------------------------------------------

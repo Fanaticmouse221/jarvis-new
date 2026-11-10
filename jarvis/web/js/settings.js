@@ -2,6 +2,7 @@
 
 import { api } from "./api.js";
 import { phoneSection } from "./phone.js";
+import { remindersSection } from "./reminders.js";
 import { confirmDialog, debounce, fmtBytes, h, icon, iconButton, plural, row, section, segmented, toast, toggle } from "./util.js";
 
 const PERSONA = {
@@ -251,5 +252,5 @@ export async function renderSettings(page, ctx) {
     ),
   );
 
-  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, phoneSection(), personality, modelsSection, places, permissions, data);
+  page.replaceChildren(h("header", { class: "page-head" }, h("h1", { text: "Settings" })), statusSection, phoneSection(), remindersSection(), personality, modelsSection, places, permissions, data);
 }
