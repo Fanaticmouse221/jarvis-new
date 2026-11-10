@@ -45,6 +45,7 @@ class ToolContext:
     run_id: str
     services: dict[str, Any] = field(default_factory=dict)  # memory, store, launcher...
     tainted: bool = False  # set once untrusted content has been read in this turn
+    channel: str = "app"  # app or telegram; both use the same permissions and memory
 
 
 Handler = Callable[[dict[str, Any], ToolContext], Awaitable[ToolResult]]
@@ -62,6 +63,15 @@ class Tool:
     describe: Callable[[dict[str, Any]], str]  # one line describing a specific call
     timeout: float = 30.0
     untrusted_output: bool = False
+    risk_for: Callable[[dict[str, Any], ToolContext], str] | None = None
+
+    def effective_risk(self, args: dict[str, Any], ctx: ToolContext) -> str:
+        """Assess a validated call, without weakening the tool's baseline risk."""
+        levels = (RISK_READ, RISK_ACT, RISK_SENSITIVE)
+        risk = self.risk_for(args, ctx) if self.risk_for else self.risk
+        if self.risk not in levels or risk not in levels:
+            raise ToolError("The tool returned an invalid risk level; the action was not run.")
+        return levels[max(levels.index(self.risk), levels.index(risk))]
 
     def schema(self) -> dict[str, Any]:
         return {

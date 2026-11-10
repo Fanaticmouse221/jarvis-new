@@ -68,8 +68,33 @@ class Runtime:
         )
         self.active: set[str] = set()  # conversations with a reply in progress
         self.token = self._load_token()
+        self._background_services: list[Any] = []
+        self._running = False
 
     # ----- plumbing -------------------------------------------------------
+
+    async def start(self) -> None:
+        """Start server-owned services once, on the server's event loop."""
+        if self._running:
+            return
+        self._running = True
+        try:
+            for service in self._background_services:
+                await service.start()
+        except BaseException:
+            await self.stop()
+            raise
+
+    async def stop(self) -> None:
+        """Cancel services and learning before their event loop closes."""
+        self._running = False
+        for service in reversed(self._background_services):
+            await service.stop()
+        tasks = list(self._tasks)
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     def _load_token(self) -> str:
         """A secret the interface must present on every API call (see security.py)."""

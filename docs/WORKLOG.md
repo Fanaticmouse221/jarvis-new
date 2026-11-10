@@ -6,6 +6,25 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026, 11:00 AM · ChatGPT/Codex · plumbing checkpoint
+
+**Done:** created `codex/jarvis-2.1-reach` from merged `main`. Added schema v3,
+conversation channels, per-call risk assessment, dynamic missing capabilities,
+phone-specific formatting context and server lifecycle management. Made the
+browser runner portable to Windows with an isolated launcher that starts a real
+Python subprocess and verifies its marker file; it never deletes an existing run.
+
+**Verified:** original 67 tests passed before changes; 76 passed after plumbing.
+Chrome browser run passed all 39 checks, including restart, approvals and memory.
+Inspected desktop approval and mobile conversation screenshots.
+
+**Unverified:** live Telegram, live Groq and Windows Start-menu launch. The browser
+launcher deliberately uses an isolated test application.
+
+**Next:** item 2 Telegram service, protected API, phone settings and fake-API tests.
+
+---
+
 ## 10 Nov 2026, 11:00 AM · Claude · branch `jarvis-2.1`
 
 **Done**

@@ -20,18 +20,23 @@ import stat
 import subprocess
 import sys
 import time
+import tempfile
 import urllib.request
 from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
 REPO = Path(__file__).resolve().parents[2]
-OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/jarvis-e2e").resolve()
+OUT = Path(sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(prefix="jarvis-e2e-")).resolve()
 RUN, SHOTS, BIN = OUT / "run", OUT / "shots", OUT / "bin"
 MARKER = OUT / "marker.txt"
 APP, MOCK = "http://127.0.0.1:8765", "http://127.0.0.1:8799"
 KEY = "gsk_e2e_valid_key_123456"
-CHROME = os.environ.get("CHROME", "/usr/bin/google-chrome")
+CHROME = os.environ.get("CHROME") or next((str(p) for p in (
+    Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
+    Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"),
+    Path("/usr/bin/google-chrome"),
+) if p.exists()), None)
 passed: list[str] = []
 
 
@@ -55,15 +60,18 @@ def wait_http(url: str) -> None:
 
 
 def start_jarvis() -> subprocess.Popen:
-    env = {k: v for k, v in os.environ.items() if k not in ("GROQ_API_KEY", "JARVIS_MODELS")}
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("JARVIS_", "TELEGRAM_")) and k not in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY")}
     env.update(
         JARVIS_GROQ_BASE_URL=f"{MOCK}/v1",
         JARVIS_DB_PATH=str(RUN / "jarvis.db"),
+        JARVIS_WORKSPACE=str(RUN / "workspace"),
+        JARVIS_E2E_MARKER=str(MARKER),
+        PYTHONPATH=str(REPO),
         PATH=f"{BIN}{os.pathsep}{env['PATH']}",
     )
     log = open(OUT / "jarvis.log", "a")
     proc = subprocess.Popen(
-        ["uv", "run", "--project", str(REPO), "jarvis", "serve", "--no-browser", "--port", "8765"],
+        [sys.executable, "-m", "tests.e2e.serve_app"],
         cwd=RUN, env=env, stdout=log, stderr=subprocess.STDOUT,
     )
     wait_http(APP + "/")
@@ -88,7 +96,8 @@ def last_turn(page: Page):
 
 
 def main() -> None:
-    shutil.rmtree(OUT, ignore_errors=True)
+    if RUN.exists():
+        raise RuntimeError("Choose a fresh output directory; browser checks never delete an existing run.")
     for folder in (RUN, SHOTS, BIN):
         folder.mkdir(parents=True)
     app_script = BIN / "e2e-marker-app"  # a real program for JARVIS to launch
@@ -96,7 +105,7 @@ def main() -> None:
     app_script.chmod(app_script.stat().st_mode | stat.S_IEXEC)
 
     mock = subprocess.Popen(
-        ["uv", "run", "--project", str(REPO), "uvicorn", "tests.e2e.mock_openai:app", "--port", "8799", "--log-level", "warning"],
+        [sys.executable, "-m", "uvicorn", "tests.e2e.mock_openai:app", "--port", "8799", "--log-level", "warning"],
         cwd=REPO, stdout=open(OUT / "mock.log", "w"), stderr=subprocess.STDOUT,
     )
     wait_http(MOCK + "/_seen")
@@ -141,7 +150,7 @@ def main() -> None:
             print("Actions: real, verified, and honest about failure")
             send(page, "open e2e-marker-app")
             check(MARKER.exists(), "open_app really started the program (it wrote its marker file)")
-            check("Opened e2e-marker-app" in last_turn(page).locator(".step-title").inner_text(), "the step reports the real outcome")
+            check("e2e-marker-app" in last_turn(page).locator(".step[data-status=ok] .step-title").inner_text(), "the step reports the accepted launch request")
             send(page, "open definitely-not-an-app")
             check(last_turn(page).locator(".step[data-status=error]").count() == 1, "a failed action is shown as failed")
             check("didn't work" in last_turn(page).inner_text(), "JARVIS says it failed instead of pretending")
@@ -274,6 +283,8 @@ def main() -> None:
     finally:
         jarvis.terminate()
         mock.terminate()
+        jarvis.wait(timeout=15)
+        mock.wait(timeout=15)
     print(f"\n{len(passed)} checks passed. Screenshots: {SHOTS}")
 
 

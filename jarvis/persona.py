@@ -107,9 +107,32 @@ Code goes in fenced blocks with a language tag. \
 Write maths in LaTeX: inline as \\( ... \\) and display equations as $$ ... $$, one step per line for worked solutions."""
 
 MISSING_ALWAYS = (
-    "browse the web or check live information, read or write files, send messages or email, "
-    "manage a calendar, set reminders, hear or speak aloud, or see the screen"
+    "contact other people or send email, manage a calendar, hear or speak aloud, or see the screen"
 )
+
+
+def missing_capabilities(tool_names: list[str]) -> str:
+    """Describe only abilities unavailable through the currently enabled tools."""
+    enabled = set(tool_names)
+    missing = []
+    if not enabled.intersection({"web_search", "read_page"}):
+        missing.append("browse the web")
+    else:
+        if "web_search" not in enabled:
+            missing.append("search the web")
+        if "read_page" not in enabled:
+            missing.append("read web pages")
+    for tool, ability in (
+        ("get_weather", "check live weather"),
+        ("read_file", "read files"),
+        ("write_file", "write files"),
+        ("set_reminder", "set reminders"),
+        ("open_app", "open applications"),
+        ("remember", "save new memories"),
+    ):
+        if tool not in enabled:
+            missing.append(ability)
+    return ", ".join(missing + [MISSING_ALWAYS])
 
 KIND_HEADINGS = {
     "preference": "Preferences",
@@ -164,6 +187,7 @@ def build_system_prompt(
     summary: str = "",
     recent_titles: list[str] | None = None,
     now: datetime | None = None,
+    channel: str = "app",
 ) -> str:
     now = now or datetime.now().astimezone()
     tool_names = tool_names or []
@@ -199,9 +223,9 @@ def build_system_prompt(
 
     sections.append(HONESTY)
     if tool_names:
-        sections.append(TOOLS_SECTION.format(missing=MISSING_ALWAYS))
+        sections.append(TOOLS_SECTION.format(missing=missing_capabilities(tool_names)))
     else:
-        sections.append(NO_TOOLS_SECTION.format(missing=MISSING_ALWAYS + ", open applications, or save new memories"))
+        sections.append(NO_TOOLS_SECTION.format(missing=missing_capabilities(tool_names)))
 
     if memory_on:
         block = [MEMORY_SECTION, "", "### What you know about the user"]
@@ -213,9 +237,12 @@ def build_system_prompt(
     elif memories:
         sections.append("## What you know about the user\n" + format_memories(memories))
 
-    sections.append(MATHS)
+    if channel != "telegram":
+        sections.append(MATHS)
 
     context = ["## Context"]
+    if channel == "telegram":
+        context.append("- This reply goes to a phone chat: keep it short and in plain text, with no tables or LaTeX.")
     if name:
         context.append(f"- The user's name is {name}.")
     context.append(f"- Current local date and time: {format_now(now)}.")

@@ -29,6 +29,7 @@ import signal
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Optional
 from urllib.parse import urlparse
@@ -103,7 +104,15 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
     rt = runtime or Runtime(settings)
     local_only = settings.host in ("127.0.0.1", "localhost", "::1")
 
-    app = FastAPI(title="JARVIS", version=__version__, docs_url=None, redoc_url=None)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        await rt.start()
+        try:
+            yield
+        finally:
+            await rt.stop()
+
+    app = FastAPI(title="JARVIS", version=__version__, docs_url=None, redoc_url=None, lifespan=lifespan)
     app.state.runtime = rt
 
     def guard(request: Request) -> None:

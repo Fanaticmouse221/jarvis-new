@@ -73,7 +73,8 @@ Status words used here, and nowhere more generously than the evidence allows:
 > The order changed on 10 November 2026 at Jack's request: phone access and more
 > abilities come first. The detailed, current plan is in [`HANDOFF.md`](../HANDOFF.md).
 
-### 2.1 Reach: phone, web, files, reminders (in progress on branch `jarvis-2.1`)
+### 2.1 Reach: phone, web, files, reminders (in progress on branch `codex/jarvis-2.1-reach`)
+- [x] Shared plumbing: schema v3, channels, dynamic risks and lifecycle (76 unit tests; 39 browser checks on Windows)
 - [ ] Message JARVIS from a phone through a private Telegram bot, with approval buttons
 - [ ] Web search and page reading with sources
 - [ ] Weather, calculator

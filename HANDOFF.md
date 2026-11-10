@@ -4,7 +4,7 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 11:00 AM (Brisbane) by Claude.
+**Last updated:** 10 November 2026, 11:00 AM (Brisbane) by ChatGPT/Codex.
 
 ## How to hand this to another AI (Jack's steps)
 
@@ -86,9 +86,9 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 |---|---|
 | Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
-| Working branch | **`jarvis-2.1`** (pull request open). If that pull request has already been merged, branch again from `main`. |
-| On that branch so far | Only this handoff system (HANDOFF.md, AGENTS.md, WORKLOG.md, save-work.bat). **No 2.1 feature code has been written yet.** |
-| Tests | `uv run pytest -q`: 67 passing on `main`. Browser run: 39 checks passing. |
+| Working branch | **`codex/jarvis-2.1-reach`**, from current `main` after the handoff branch was merged. |
+| On that branch so far | Item 1 plumbing complete: schema v3, channel-aware turns, per-call risk, capability-aware prompt, background lifecycle. Telegram and tools are being developed next. |
+| Tests | Plumbing checkpoint: `uv run pytest -q`: 76 passing. Chrome browser run: 39 checks passing on Windows; desktop and mobile screenshots inspected. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -110,7 +110,7 @@ Build in this order. Commit and push after each numbered item with tests passing
 ticking the box here. Design notes are decisions already made; follow them unless
 you find a real problem, and record any change in `docs/DECISIONS.md`.
 
-### [ ] 1. Plumbing (small, needed by everything below)
+### [x] 1. Plumbing (small, needed by everything below)
 - `storage.py`: migration v3. Add `conversations.source TEXT NOT NULL DEFAULT 'app'`
   ('app' or 'telegram') and a `reminders` table (id, text, due_at UTC ISO, repeat
   none/daily/weekdays/weekly, status pending/sent/cancelled, conversation_id,
