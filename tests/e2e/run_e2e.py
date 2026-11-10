@@ -199,6 +199,12 @@ def main() -> None:
             page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Complete plan step 1").click()
             page.locator(".plan-row", has_text="✓ 1. Review notes").wait_for()
             check("✓ 1. Review notes" in page.inner_text(".plan-row"), "a plan step can be completed")
+            page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Cancel plan 1").click()
+            page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Reopen plan 1").wait_for()
+            check("Cancelled plan" in page.inner_text(".plan-row"), "a plan can be cancelled")
+            page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Reopen plan 1").click()
+            page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Cancel plan 1").wait_for()
+            check("Active plan" in page.inner_text(".plan-row"), "a cancelled plan can be reopened")
             page.click(".rail-item[data-nav=chat]")
             page.wait_for_selector("#input")
 

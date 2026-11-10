@@ -105,6 +105,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [x] Durable plan records with ordered steps and create/list API and agent tools
 - [x] Step completion/reopening with plan status derived from persisted steps
 - [x] Resume lookup for the next pending plan step
+- [x] Cancel and reopen plans without deleting their step history
 - [x] Visible plan creation and step controls in the To-dos page
 - [ ] Resumable execution
 - [ ] Semantic memory search if keyword recall proves insufficient

@@ -6,6 +6,21 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Plan cancellation and reopening
+
+**Done:** added reversible plan status changes. Active plans can be cancelled
+and cancelled plans can be reopened through storage, the agent, the protected
+API and the To-dos page; completed plans remain final.
+
+**Verified:** focused plan/API tests passed **19 tests**, Python and JavaScript
+syntax checks passed, and `git diff --check` passed.
+
+**Unverified:** automatic model-driven execution and resume after an interrupted
+turn remain unbuilt.
+
+**Next:** run the full suite and browser regression, then commit and merge this
+plan lifecycle slice.
+
 ## 10 Nov 2026 · GitHub Copilot · Plan resume lookup
 
 **Done:** added durable plan detail lookup and a `resume_plan` read tool that

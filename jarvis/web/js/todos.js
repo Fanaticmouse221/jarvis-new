@@ -85,12 +85,30 @@ export async function renderTodos(page) {
         }),
       );
     });
+    const planAction = plan.status === "cancelled"
+      ? h("button", {
+        class: "btn", type: "button", text: "Reopen", "aria-label": `Reopen plan ${plan.id}`,
+        onClick: async () => {
+          try { await api(`/plans/${plan.id}`, { method: "PATCH", body: { status: "active" } }); await loadPlans(); }
+          catch (error) { toast(error.message, "error"); }
+        },
+      })
+      : plan.status === "active"
+        ? h("button", {
+          class: "btn", type: "button", text: "Cancel", "aria-label": `Cancel plan ${plan.id}`,
+          onClick: async () => {
+            try { await api(`/plans/${plan.id}`, { method: "PATCH", body: { status: "cancelled" } }); await loadPlans(); }
+            catch (error) { toast(error.message, "error"); }
+          },
+        })
+        : null;
     return h("div", { class: "row plan-row" },
       h("div", { class: "row-text" },
         h("strong", { text: plan.title, class: plan.status === "completed" ? "todo-done" : "" }),
-        h("span", { text: `${plan.status === "completed" ? "Completed" : "Active"} plan` }),
+        h("span", { text: `${plan.status[0].toUpperCase()}${plan.status.slice(1)} plan` }),
         ...stepRows,
       ),
+      planAction,
     );
   }
   page.replaceChildren(

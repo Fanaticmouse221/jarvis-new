@@ -433,6 +433,18 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
             raise HTTPException(404, "Plan not found.")
         return plan
 
+    @api.patch("/plans/{plan_id}")
+    async def update_plan_status(plan_id: int, request: Request) -> dict[str, Any]:
+        body = await request.json()
+        status = body.get("status")
+        try:
+            plan = rt.store.update_plan_status(plan_id, status)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if plan is None:
+            raise HTTPException(404, "Plan not found.")
+        return plan
+
     @api.post("/plans")
     def create_plan(body: PlanCreate) -> dict[str, Any]:
         try:
