@@ -6,6 +6,22 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · To-dos browser coverage
+
+**Done:** extended the browser regression to navigate the real To-dos page,
+add a to-do through the protected API, complete it and reopen it. The check
+also returns to Chat before continuing the existing conversation coverage.
+
+**Verified:** the complete browser regression passed **62 checks** with no
+console errors or warnings. The new browser test file passes Python syntax and
+`git diff --check`.
+
+**Unverified:** this remains a stand-in model and test workspace; live-model
+task phrasing and real Windows application/file behaviour still need Jack's PC.
+
+**Next:** commit and merge this regression coverage, then continue with the
+next small 2.3 ability.
+
 ## 10 Nov 2026 · GitHub Copilot · 2.3 approved computer and file actions
 
 **Done:** completed the remaining planned 2.3 action slice. Added sensitive

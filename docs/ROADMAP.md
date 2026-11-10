@@ -38,7 +38,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
-| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos, approval-aware close/move/delete tools and the To-dos page are covered by 183 automated tests and the browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
+| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos, approval-aware close/move/delete tools and the To-dos page are covered by 183 automated tests and a 62-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -172,6 +173,24 @@ def main() -> None:
             check("ok" in page.get_attribute("#railStatus .dot", "class"), "status light turns green")
             check(page.locator("#modelSelect option").count() == 4, "three models were selected automatically from the account's list")
             shot("02-welcome")
+
+            print("To-dos: add, complete and reopen")
+            page.click(".rail-item[data-nav=todos]")
+            page.wait_for_selector("h1:has-text('To-dos')")
+            check("No to-dos yet." in page.inner_text(".page"), "the To-dos page starts empty")
+            page.fill("input[aria-label='To-do title']", "Book chemistry revision")
+            page.fill("input[aria-label='To-do details']", "Review the practice questions")
+            page.click("button:has-text('Add to-do')")
+            page.locator(".row", has_text="Book chemistry revision").wait_for()
+            check("Review the practice questions" in page.inner_text(".row"), "a to-do is added through the protected API")
+            page.locator(".row", has_text="Book chemistry revision").get_by_role("button", name=re.compile("Complete")).click()
+            page.locator(".group-heading", has_text="Completed").wait_for()
+            check("Book chemistry revision" in page.inner_text(".group-heading + .row"), "a to-do can be completed")
+            page.locator(".row", has_text="Book chemistry revision").get_by_role("button", name=re.compile("Reopen")).click()
+            page.locator(".row", has_text="Book chemistry revision").get_by_role("button", name=re.compile("Complete")).wait_for()
+            check(page.locator(".group-heading", has_text="Completed").count() == 0, "a completed to-do can be reopened")
+            page.click(".rail-item[data-nav=chat]")
+            page.wait_for_selector("#input")
 
             print("Memory: told, learned, and visible")
             send(page, "Remember that I prefer worked solutions step by step")
