@@ -25,7 +25,7 @@ from urllib.parse import urlparse
 
 import psutil
 
-from jarvis.tools.base import RISK_ACT, RISK_READ, Tool, ToolContext, ToolError, ToolResult, obj
+from jarvis.tools.base import RISK_ACT, RISK_READ, RISK_SENSITIVE, Tool, ToolContext, ToolError, ToolResult, obj
 
 # Things people ask for that aren't Start-menu entries. Opened through the shell.
 WINDOWS_ALIASES = {
@@ -66,6 +66,27 @@ class AppLauncher:
 
     def launch(self, app: dict[str, str]) -> None:
         raise ToolError("Opening apps isn't supported on this operating system.")
+
+    def close(self, app: dict[str, str]) -> list[str]:
+        processes = _matching_processes(_name_tokens(app))
+        if not processes:
+            return []
+        closed: list[str] = []
+        for process in processes:
+            try:
+                name = process.info.get("name") or str(process.pid)
+                process.terminate()
+                closed.append(name)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        if processes:
+            _, still_running = psutil.wait_procs(processes, timeout=2)
+            for process in still_running:
+                try:
+                    process.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        return closed
 
 
 class WindowsLauncher(AppLauncher):
@@ -136,6 +157,18 @@ class PathLauncher(AppLauncher):
             raise ToolError(f"Couldn't start {app['name']}: {exc.strerror or exc}") from exc
 
 
+def _matching_processes(tokens: set[str]) -> list[psutil.Process]:
+    matches = []
+    for process in psutil.process_iter(["name"]):
+        try:
+            name = process.info["name"] or ""
+            if any(token in re.sub(r"[^a-z0-9]", "", name.casefold()) for token in tokens):
+                matches.append(process)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return matches
+
+
 def default_launcher() -> AppLauncher:
     return WindowsLauncher() if sys.platform == "win32" else PathLauncher()
 
@@ -197,6 +230,19 @@ async def open_app(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
         "appeared within a few seconds, so this could not be confirmed. Tell the user it should be opening.",
         summary=f"Asked to open {app['name']} (not confirmed)",
     )
+
+
+async def close_app(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    launcher: AppLauncher = ctx.services["launcher"]
+    name = args["name"]
+    app, suggestions = await asyncio.to_thread(launcher.find, name)
+    if app is None:
+        hint = f" Closest installed apps: {', '.join(suggestions)}." if suggestions else ""
+        raise ToolError(f"No installed app matches '{name}'.{hint}")
+    closed = await asyncio.to_thread(launcher.close, app)
+    if not closed:
+        raise ToolError(f"{app['name']} does not appear to be running.")
+    return ToolResult(True, f"Closed {app['name']}.", summary=f"Closed {app['name']}", data={"processes": closed})
 
 
 async def open_url(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
@@ -277,6 +323,17 @@ TOOLS = [
         handler=open_url,
         describe=lambda a: f"Open {a.get('url', 'a web page')}",
         timeout=15,
+    ),
+    Tool(
+        name="close_app",
+        group="computer",
+        label="Close an app",
+        description="Close a running installed application by name. Unsaved work may be lost, so always ask first.",
+        parameters=obj({"name": {"type": "string", "description": "The app's name.", "maxLength": 80}}, ["name"]),
+        risk=RISK_SENSITIVE,
+        handler=close_app,
+        describe=lambda a: f"Close {a.get('name', 'an app')}",
+        timeout=20,
     ),
     Tool(
         name="get_system_info",

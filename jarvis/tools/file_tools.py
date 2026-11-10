@@ -6,6 +6,7 @@ import asyncio
 import io
 import os
 import re
+import shutil
 import sys
 import zipfile
 from pathlib import Path, PureWindowsPath
@@ -250,6 +251,44 @@ async def open_file(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     return ToolResult(True, f"Asked Windows to open {path.name}; the application opening could not be confirmed.")
 
 
+async def move_file(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    source = approved_path(args["source"], ctx)
+    destination = approved_path(args["destination"], ctx)
+    if not source.is_file():
+        raise ToolError("The source file does not exist.")
+    if destination.exists():
+        raise ToolError("The destination already exists; move it somewhere else first.")
+    if not destination.parent.is_dir():
+        raise ToolError("The destination folder does not exist.")
+
+    def move() -> None:
+        approved_path(str(source), ctx)
+        approved_path(str(destination), ctx)
+        try:
+            shutil.move(str(source), str(destination))
+        except OSError as exc:
+            raise ToolError(f"Windows could not move the file: {exc.strerror or exc}.") from exc
+
+    await asyncio.to_thread(move)
+    return ToolResult(True, f"Moved {source.name} to {destination}.", summary=f"Moved {source.name}")
+
+
+async def delete_file(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    path = approved_path(args["path"], ctx)
+    if not path.is_file():
+        raise ToolError("That file does not exist.")
+
+    def remove() -> None:
+        approved_path(str(path), ctx)
+        try:
+            path.unlink()
+        except OSError as exc:
+            raise ToolError(f"Windows could not delete the file: {exc.strerror or exc}.") from exc
+
+    await asyncio.to_thread(remove)
+    return ToolResult(True, f"Deleted {path.name}.", summary=f"Deleted {path.name}")
+
+
 _PATH = {"type": "string", "maxLength": 500}
 TOOLS = [
     Tool("list_files", "files", "List files", "List an approved folder; omit folder to see roots. Search matches names.",
@@ -264,4 +303,10 @@ TOOLS = [
          RISK_ACT, write_file, lambda a: f"{a.get('mode', 'create').title()} {a.get('path', 'file')}", risk_for=write_risk),
     Tool("open_file", "files", "Open a file", "Open an approved document or image in its Windows app.",
          obj({"path": _PATH}, ["path"]), RISK_ACT, open_file, lambda a: f"Open {a.get('path', 'file')}"),
+    Tool("move_file", "files", "Move a file", "Move an approved file to another approved folder. Never overwrites an existing destination.",
+         obj({"source": _PATH, "destination": _PATH}, ["source", "destination"]), RISK_SENSITIVE, move_file,
+         lambda a: f"Move {a.get('source', 'file')} to {a.get('destination', 'folder')}"),
+    Tool("delete_file", "files", "Delete a file", "Delete one approved file. Folders and protected files are never deleted.",
+         obj({"path": _PATH}, ["path"]), RISK_SENSITIVE, delete_file,
+         lambda a: f"Delete {a.get('path', 'file')}"),
 ]

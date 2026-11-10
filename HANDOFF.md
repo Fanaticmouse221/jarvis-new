@@ -4,7 +4,7 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 12:45 PM (Brisbane) by GitHub Copilot.
+**Last updated:** 10 November 2026, 1:05 PM (Brisbane) by GitHub Copilot.
 
 ## How to hand this to another AI (Jack's steps)
 
@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos are now implemented on this branch. |
-| Tests | `uv run pytest -q`: **181 passed**. Browser regression: **58 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality and live-model task phrasing remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos and approved computer/file actions are implemented on this branch. |
+| Tests | `uv run pytest -q`: **183 passed**. Browser regression: **58 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -231,15 +231,23 @@ brain and the browser run can exercise them.
 - The app has a protected `/api/todos` surface and a To-dos page for adding,
   completing and reopening items.
 
+### [x] 9. Version 2.3 approved computer and file actions
+- `close_app` asks for approval and closes matching running application processes,
+  reporting when the target is not running.
+- `move_file` and `delete_file` ask for approval, remain inside approved roots,
+  re-check paths immediately before mutation, refuse overwrites, and never
+  recursively delete folders.
+- Added fake-model and focused safety/approval coverage for all three actions.
+
 ### What to do next: continue version 2.3 "Tasks"
 
-1. Add the remaining 2.3 computer actions: close applications, then move/delete
-   files with explicit approval and the existing outside-content safeguards.
-2. Add focused browser coverage for the To-dos page and task actions.
-3. On Jack's PC, run a live-model check of natural task phrasing and verify
+1. Add focused browser coverage for the To-dos page and task actions if the
+   existing page checks do not already cover the new surface.
+2. On Jack's PC, run a live-model check of natural task phrasing and verify
    voice separately when convenient; live Groq and microphone paths remain
    unverified here.
-4. Update this handoff and worklog, then open the next pull request.
+3. Consider the next small 2.3 ability only after the current pull request is
+   merged and the action slice has been tried on Windows.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.

@@ -24,12 +24,17 @@ class FakeLauncher(AppLauncher):
 
     def __init__(self) -> None:
         self.launched: list[str] = []
+        self.closed: list[str] = []
 
     def list_apps(self) -> list[dict[str, str]]:
         return [{"name": name, "id": name.lower()} for name in ("Notepad", "Spotify", "Visual Studio Code", "Calculator")]
 
     def launch(self, app: dict[str, str]) -> None:
         self.launched.append(app["name"])
+
+    def close(self, app: dict[str, str]) -> list[str]:
+        self.closed.append(app["name"])
+        return [app["name"].lower() + ".exe"]
 
 
 def make_settings(tmp_path: Path, models: str = "fake:agent", **overrides: Any) -> Settings:

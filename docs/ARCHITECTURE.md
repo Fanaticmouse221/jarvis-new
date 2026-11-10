@@ -93,9 +93,12 @@ non-read action in that turn needs approval, whatever its setting. This is the
 defence against instructions hidden in documents.
 
 Current tools: `remember`, `recall`, `forget`, `search_conversations`,
-`open_app`, `open_url`, `get_system_info`. Adding one means writing a handler
-and a `Tool(...)` entry; permissions, approvals, logging and the interface come
-for free.
+`open_app`, `close_app`, `open_url`, `get_system_info`, `list_files`,
+`read_file`, `write_file`, `open_file`, `move_file`, `delete_file`, and the
+task tools `add_todo`, `list_todos`, `change_todo`. File reads are marked as
+untrusted output; sensitive app/file mutations always require approval. Adding
+one means writing a handler and a `Tool(...)` entry; permissions, approvals,
+logging and the interface come for free.
 
 ## Model layer
 
