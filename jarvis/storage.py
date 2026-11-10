@@ -763,6 +763,15 @@ class Store:
         )
         return result
 
+    def attach_plan_conversation(self, plan_id: int, conversation_id: str) -> bool:
+        with self._connect() as conn:
+            changed = conn.execute(
+                "UPDATE plans SET conversation_id = ?, updated_at = ? "
+                "WHERE id = ? AND conversation_id IS NULL",
+                (conversation_id, utc_now(), plan_id),
+            )
+        return changed.rowcount > 0
+
     def claim_plan_step(self, plan_id: int) -> dict[str, Any] | None:
         """Claim the next unfinished step, reclaiming an interrupted attempt."""
         token = uuid.uuid4().hex

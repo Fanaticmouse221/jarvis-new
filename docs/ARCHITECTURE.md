@@ -149,6 +149,13 @@ upgrades in place.
 | 2.3 Tasks | to-dos and more file actions | task state, approval-aware tools |
 | 3.0 | longer multi-step work that survives restarts | plan state, execution checkpoints and resumable agent work |
 
+Plan execution claims one pending step before creating the turn. It then uses
+the same `Agent.start_turn` and `Agent.run_turn` path as ordinary chat, so
+memory, personality, tool permissions, approvals and outside-content tainting
+are not bypassed. A normal completed turn marks the step complete unless a
+tool failed or was denied; interruption or model failure marks it failed so a
+later attempt can reclaim it.
+
 ## Voice
 
 The browser records microphone input with `MediaRecorder` and posts the audio
