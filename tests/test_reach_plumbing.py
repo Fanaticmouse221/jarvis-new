@@ -33,7 +33,7 @@ def test_v2_migration_preserves_data_and_adds_reminders(tmp_path):
     assert store.get_conversation(phone["id"])["source"] == "telegram"
     assert {c["source"] for c in store.list_conversations()} == {"app", "telegram"}
     with store._connect() as conn:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 6
         conn.execute(
             "INSERT INTO reminders (text, due_at, conversation_id, created_at) VALUES (?, ?, ?, ?)",
             ("Study", "2026-11-10T08:00:00Z", phone["id"], "2026-11-09T08:00:00Z"),

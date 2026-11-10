@@ -39,7 +39,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
 | To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable editable to-dos with optional due dates and approval-gated deletion, approval-aware close/move/delete tools, safer process matching, and API edit parity are covered by 188 automated tests and a 63-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
-| Multi-step work that survives restarts | Not started | 3.0 |
+| Multi-step work that survives restarts | Built, needs a real-world check | Durable plan/step storage, agent create/list tools and protected API creation/listing are covered by automated tests; step execution and UI remain unbuilt |
 | iPhone / iPad access, sync | Not started | 3.x |
 
 ## Acceptance criteria
@@ -102,7 +102,8 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [x] Safer application process matching and automatic update before startup
 
 ### 3.0 and beyond
-- [ ] Multi-step work with visible plans that survives restarts
+- [x] Durable plan records with ordered steps and create/list API and agent tools
+- [ ] Step completion, resumable execution and visible plans in the interface
 - [ ] Semantic memory search if keyword recall proves insufficient
 - [ ] Login, encrypted remote access, installable app on iPhone and iPad, sync
 - [ ] Calendar and email through official APIs, with approval before sending

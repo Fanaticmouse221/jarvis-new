@@ -182,6 +182,12 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.fullmatch(r"(?:rename|edit) to-?do #?(\d+) to (.+)", text, re.I)
     if match:
         return use("edit_todo", id=int(match.group(1)), title=match.group(2).strip())
+    match = re.match(r"(?:create|make) (?:a )?plan:?\s+(.+?)\s+with steps? (.+)", text, re.I | re.S)
+    if match:
+        steps = [step.strip() for step in re.split(r"\s*(?:;|, then)\s*", match.group(2)) if step.strip()]
+        return use("create_plan", title=match.group(1).strip(), steps=steps)
+    if lower in ("list plans", "show plans", "my plans"):
+        return use("list_plans")
     match = re.fullmatch(r"(?:please )?(?:close|quit|exit) (.+?)[.!]?$", text, re.I)
     if match:
         return use("close_app", name=match.group(1).strip())

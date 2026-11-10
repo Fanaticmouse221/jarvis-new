@@ -27,6 +27,8 @@
 - JARVIS can now revise a to-do's title, details or due date.
 - The protected to-do API now supports the same title, details and due-date
   edits as the agent tool.
+- Added the first durable-plan foundation: ordered plan steps survive restarts
+  and are available through protected API and agent create/list tools.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach
