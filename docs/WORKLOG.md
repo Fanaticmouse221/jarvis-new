@@ -6,6 +6,25 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · To-do due dates
+
+**Done:** added optional ISO due dates to durable to-dos. SQLite migration v5
+stores and normalises UTC timestamps, the agent can include due dates when
+creating and listing items, and the To-dos page provides a local date/time
+picker with overdue highlighting. Existing items and API callers remain
+compatible when no due date is supplied.
+
+**Verified:** `uv run pytest -q` passed **184 tests**. The browser regression
+passed **62 checks** with no console errors or warnings. Python and JavaScript
+syntax checks plus `git diff --check` passed.
+
+**Unverified:** date display depends on the user's local Windows timezone, and
+live-model interpretation of natural-language due dates still needs a real
+Groq check.
+
+**Next:** commit and merge this slice, then continue with the next small task
+ability.
+
 ## 10 Nov 2026 · GitHub Copilot · Safer application process matching
 
 **Done:** tightened the shared process matcher used by app opening

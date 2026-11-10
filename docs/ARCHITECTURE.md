@@ -132,7 +132,7 @@ logging and the interface come for free.
 | `memories` | kind, content, pinned, source, usage |
 | `settings` | preferences changed in the app |
 | `tool_runs` | the action log |
-| `todos` | durable pending and completed to-dos |
+| `todos` | durable pending and completed to-dos, with optional UTC due dates |
 | `usage` | requests and tokens per model per day |
 
 Schema changes are numbered migrations (`PRAGMA user_version`); a v0.1 database
