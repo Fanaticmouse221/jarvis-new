@@ -3,8 +3,8 @@
 A personal AI assistant that knows who it works for, sounds like itself, and can
 act on your computer. Built on free tools, one working feature at a time.
 
-**Version 2.0.** Memory, personality and the agent core are in. Voice and web
-research come next. [What works and how it was verified](docs/ROADMAP.md).
+**Version 2.1.** Memory, personality, phone access, web research, file tools and
+reminders are in. Voice comes next. [What works and how it was verified](docs/ROADMAP.md).
 
 ## What it does
 
@@ -23,9 +23,17 @@ research come next. [What works and how it was verified](docs/ROADMAP.md).
   fallback when one is rate-limited, and a status panel showing what you've
   used today.
 - **Renders maths, code and tables** properly.
+- **Reaches you on your phone.** Link one private Telegram chat to the same
+  JARVIS process, memory and permissions. Approval buttons work from the phone.
+- **Researches the public web.** Search and read public pages with bounded,
+  untrusted results and source links.
+- **Works with approved files.** List and read text, Word, PowerPoint and PDF
+  files, create or append text files, and open documents in their normal app.
+- **Reminds you.** Reminders appear in the app, on Telegram when linked and as
+  best-effort Windows notifications.
 
-Not yet: voice, web search, files, reminders, phone access. JARVIS knows this
-and says so if asked.
+Not yet: voice, to-dos, closing apps, and moving or deleting files. JARVIS knows
+this and says so if asked.
 
 ## Install (Windows)
 
@@ -63,6 +71,9 @@ AI, but it lets you see the interface and the memory system working.
 | "Open Spotify" (or any installed app) | The app opens; the step says whether that was confirmed |
 | "From now on keep answers to two sentences" | Saved as a standing instruction and followed afterwards |
 | "How's my computer doing?" | Real CPU, memory, disk and battery figures |
+| "What's the weather?" | A current forecast for the Home city in Settings |
+| "Search the web for …" | Five compact, sourced results (external content is untrusted) |
+| "Remind me in 10 minutes to stretch" | A reminder in the app, on Telegram if linked and on Windows |
 
 Then look at **Memory**, **Activity** and **Settings** in the left-hand rail.
 
@@ -106,7 +117,7 @@ be charged.
 ## For developers
 
 ```powershell
-uv run pytest                 # 67 tests
+uv run pytest                 # automated suite
 uv run jarvis --help
 uv run jarvis serve --port 8001 --no-browser
 python tests/e2e/run_e2e.py   # full browser run (needs Playwright and Chrome)

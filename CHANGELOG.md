@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.0 (in development): Reach
+## 2.1.0 (2026-11-10): Reach
 
 - Channel-aware conversations, dynamic tool risks and background service lifecycle.
 - Capability descriptions now follow the tools that are switched on.
@@ -51,11 +51,11 @@ Memory and personality are the centre of this release; the agent core exists to 
 
 ### Under the hood
 - Database migrates from 0.1 in place
-- 67 automated tests; a mock provider and a 39-check browser run in `tests/e2e`
+- Automated tests, a mock provider and a browser regression runner covering the app and Telegram stand-in in `tests/e2e`
 - `update.bat`
 
 ### Not in this release
-Voice, web research, file tools, reminders. See the roadmap.
+Voice, to-dos, closing apps, and moving or deleting files. See the roadmap.
 
 ## 0.1.0 (2026-11-09): text chat foundation
 - Web chat with streaming replies, saved conversations, model fallback, Windows setup scripts

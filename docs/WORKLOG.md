@@ -6,6 +6,28 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · 2.1 release pass
+
+**Done:** finished the Reach release metadata and interface coverage. Bumped the
+package to 2.1.0, updated the README, changelog, architecture and roadmap, and
+recorded the current handoff state. The browser regression now explicitly checks
+the Folders and home-city settings and the Reminders section.
+
+**Verified:** `uv run pytest -q` passed **176 tests**. The browser regression
+passed **55 checks** against the OpenAI and Telegram stand-ins; generated
+screenshots were inspected, including Settings, linked Phone, Telegram
+conversation and 390px mobile views. `git diff --check` passed.
+
+**Unverified:** this environment cannot perform a live Groq request, pair a real
+Telegram bot, or verify Windows toast delivery and document associations. The
+browser run uses stand-ins for those services.
+
+**Next:** merge [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5), then begin the 2.2 voice
+milestone. On Jack's PC, run `update.bat`, then try a real Groq reply, Telegram
+pairing and a reminder.
+
+---
+
 ## 10 Nov 2026 · ChatGPT/Codex · reminders checkpoint
 
 **Done:** persistent one-off/daily/weekday/weekly reminders, 15-second scheduler,
