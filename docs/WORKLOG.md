@@ -6,6 +6,21 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Due-date regression coverage
+
+**Done:** extended the API and browser regression to verify due-date
+normalisation and display. The browser now creates a dated to-do through the
+real page, confirms the deadline is rendered, then continues the existing
+completion and reopen checks.
+
+**Verified:** `uv run pytest -q` passed **185 tests**. The browser regression
+passed **63 checks** with no console errors or warnings.
+
+**Unverified:** localised date formatting and natural-language due-date
+interpretation still need a real Windows/live-model check.
+
+**Next:** commit and merge this evidence improvement, then continue development.
+
 ## 10 Nov 2026 · GitHub Copilot · Automatic update before start
 
 **Done:** changed `start.bat` to call `update.bat /silent` before checking
