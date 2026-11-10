@@ -7,7 +7,9 @@ from jarvis.tools.base import RISK_ACT, RISK_READ, Tool, ToolContext, ToolError,
 
 async def add_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     try:
-        todo = ctx.services["store"].create_todo(args["title"], args.get("details", ""), ctx.conversation_id)
+        todo = ctx.services["store"].create_todo(
+            args["title"], args.get("details", ""), ctx.conversation_id, args.get("due_at")
+        )
     except ValueError as exc:
         raise ToolError(str(exc)) from exc
     return ToolResult(True, f"Added to-do #{todo['id']}: {todo['title']}", data={"todo": todo})
@@ -20,7 +22,12 @@ async def list_todos(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
         raise ToolError(str(exc)) from exc
     if not todos:
         return ToolResult(True, "There are no matching to-dos.", summary="No matching to-dos")
-    lines = [f"#{item['id']} [{item['status']}] {item['title']}" + (f" — {item['details']}" if item["details"] else "") for item in todos]
+    lines = [
+        f"#{item['id']} [{item['status']}] {item['title']}"
+        + (f" — due {item['due_at']}" if item.get("due_at") else "")
+        + (f" — {item['details']}" if item["details"] else "")
+        for item in todos
+    ]
     return ToolResult(True, "\n".join(lines)[:2800], summary=f"{len(todos)} to-dos")
 
 
@@ -36,8 +43,9 @@ async def change_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
 TOOLS = [
     Tool(
         "add_todo", "tasks", "Add a to-do",
-        "Add a durable to-do with a short title and optional details.",
-        obj({"title": {"type": "string", "maxLength": 500}, "details": {"type": "string", "maxLength": 2000}}, ["title"]),
+        "Add a durable to-do with a short title, optional details and optional ISO due date.",
+        obj({"title": {"type": "string", "maxLength": 500}, "details": {"type": "string", "maxLength": 2000},
+             "due_at": {"type": "string", "maxLength": 40}}, ["title"]),
         RISK_ACT, add_todo, lambda a: f"Add to-do: {a.get('title', '')[:70]}",
     ),
     Tool(

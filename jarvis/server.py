@@ -85,6 +85,7 @@ class TelegramTokenRequest(BaseModel):
 class TodoCreate(BaseModel):
     title: str = Field(min_length=1, max_length=500)
     details: str = Field(default="", max_length=2000)
+    due_at: str | None = Field(default=None, max_length=40)
 
 
 class MemoryCreate(BaseModel):
@@ -409,7 +410,7 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
     @api.post("/todos")
     def create_todo(body: TodoCreate) -> dict[str, Any]:
         try:
-            return rt.store.create_todo(body.title, body.details)
+            return rt.store.create_todo(body.title, body.details, due_at=body.due_at)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 

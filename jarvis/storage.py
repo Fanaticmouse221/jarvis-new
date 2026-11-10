@@ -123,6 +123,11 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX idx_todos_status_updated ON todos(status, updated_at DESC);
     """,
+    # v5: optional due dates for durable to-dos
+    """
+    ALTER TABLE todos ADD COLUMN due_at TEXT;
+    CREATE INDEX idx_todos_due ON todos(status, due_at);
+    """,
 ]
 
 FTS_SETUP = """
@@ -526,7 +531,13 @@ class Store:
 
     # ----- to-dos --------------------------------------------------------
 
-    def create_todo(self, title: str, details: str = "", conversation_id: str | None = None) -> dict[str, Any]:
+    def create_todo(
+        self,
+        title: str,
+        details: str = "",
+        conversation_id: str | None = None,
+        due_at: str | None = None,
+    ) -> dict[str, Any]:
         title, details = title.strip(), details.strip()
         if not title:
             raise ValueError("A to-do needs a title.")
@@ -534,14 +545,30 @@ class Store:
             raise ValueError("To-do titles are limited to 500 characters.")
         if len(details) > 2000:
             raise ValueError("To-do details are limited to 2,000 characters.")
+        due_at = self._normalise_todo_due(due_at)
         now = utc_now()
         with self._connect() as conn:
             cursor = conn.execute(
-                "INSERT INTO todos (title, details, conversation_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-                (title, details, conversation_id, now, now),
+                "INSERT INTO todos (title, details, conversation_id, created_at, updated_at, due_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (title, details, conversation_id, now, now, due_at),
             )
             row = conn.execute("SELECT * FROM todos WHERE id = ?", (cursor.lastrowid,)).fetchone()
         return dict(row)
+
+    @staticmethod
+    def _normalise_todo_due(due_at: str | None) -> str | None:
+        if due_at in (None, ""):
+            return None
+        if not isinstance(due_at, str):
+            raise ValueError("To-do due dates must be ISO timestamps.")
+        value = due_at.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError("To-do due dates must be valid ISO timestamps.") from exc
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
     def list_todos(self, status: str = "pending") -> list[dict[str, Any]]:
         if status not in ("pending", "completed", "all"):
@@ -550,7 +577,7 @@ class Store:
         params: tuple[Any, ...] = () if status == "all" else (status,)
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM todos " + where + "ORDER BY status, updated_at DESC, id DESC LIMIT 200",
+                "SELECT * FROM todos " + where + "ORDER BY status, (due_at IS NULL), due_at, updated_at DESC, id DESC LIMIT 200",
                 params,
             ).fetchall()
         return [dict(row) for row in rows]
