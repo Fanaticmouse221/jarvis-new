@@ -35,6 +35,20 @@ async def list_plans(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     return ToolResult(True, "\n".join(lines)[:2800], summary=f"{len(plans)} plans")
 
 
+async def resume_plan(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    plan = ctx.services["store"].get_plan(args["plan_id"])
+    if plan is None:
+        raise ToolError("That plan was not found. Use list_plans to check its number.")
+    if plan["next_step"] is None:
+        return ToolResult(True, f"Plan #{plan['id']} is complete: {plan['title']}", data={"plan": plan})
+    step = plan["next_step"]
+    return ToolResult(
+        True,
+        f"Next step for plan #{plan['id']} ({plan['title']}): {step['position']}. {step['title']}",
+        data={"plan": plan},
+    )
+
+
 async def change_plan_step(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     plan = ctx.services["store"].update_plan_step(args["plan_id"], args["step"], args["status"])
     if plan is None:
@@ -90,5 +104,15 @@ TOOLS = [
         RISK_ACT,
         change_plan_step,
         lambda a: f"{'Complete' if a.get('status') == 'completed' else 'Reopen'} plan #{a.get('plan_id', '?')} step {a.get('step', '?')}",
+    ),
+    Tool(
+        "resume_plan",
+        "tasks",
+        "Resume a plan",
+        "Show the next pending step in a durable plan.",
+        obj({"plan_id": {"type": "integer", "minimum": 1}}, ["plan_id"]),
+        RISK_READ,
+        resume_plan,
+        lambda a: f"Resume plan #{a.get('plan_id', '?')}",
     ),
 ]

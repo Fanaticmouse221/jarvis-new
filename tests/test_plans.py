@@ -19,6 +19,7 @@ def test_plan_storage_survives_listing(runtime):
     assert listed[0]["title"] == "Revise chemistry"
     assert [step["title"] for step in listed[0]["steps"]] == ["Review notes", "Do practice questions"]
     assert runtime.store.list_plans("completed") == []
+    assert runtime.store.get_plan(plan["id"])["next_step"]["position"] == 1
     completed = runtime.store.update_plan_step(plan["id"], 1, "completed")
     assert completed["status"] == "active"
     completed = runtime.store.update_plan_step(plan["id"], 2, "completed")
@@ -65,3 +66,8 @@ def test_fake_model_understands_plan_phrasing():
         [{"function": {"name": "change_plan_step"}}],
     )
     assert calls[0].name == "change_plan_step"
+    reply, calls = scripted_reply(
+        [ChatMessage("user", "resume plan 1")],
+        [{"function": {"name": "resume_plan"}}],
+    )
+    assert calls[0].name == "resume_plan"

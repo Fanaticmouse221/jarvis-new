@@ -194,6 +194,9 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.fullmatch(r"reopen plan #?(\d+) step #?(\d+)", lower)
     if match:
         return use("change_plan_step", plan_id=int(match.group(1)), step=int(match.group(2)), status="pending")
+    match = re.fullmatch(r"(?:resume|continue) plan #?(\d+)", lower)
+    if match:
+        return use("resume_plan", plan_id=int(match.group(1)))
     match = re.fullmatch(r"(?:please )?(?:close|quit|exit) (.+?)[.!]?$", text, re.I)
     if match:
         return use("close_app", name=match.group(1).strip())

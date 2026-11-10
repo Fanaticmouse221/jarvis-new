@@ -6,6 +6,20 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Plan resume lookup
+
+**Done:** added durable plan detail lookup and a `resume_plan` read tool that
+returns the next pending step, plus a protected plan-detail API route.
+
+**Verified:** focused plan/API tests pass after the change; the full suite and
+browser regression are the final checks before committing.
+
+**Unverified:** this identifies work to resume but does not yet execute model
+steps automatically.
+
+**Next:** run the full suite and browser regression, then commit and merge this
+resume lookup slice.
+
 ## 10 Nov 2026 · GitHub Copilot · Visible durable plans
 
 **Done:** added plan creation and persisted step controls to the To-dos page.

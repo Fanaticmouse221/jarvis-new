@@ -237,6 +237,8 @@ def test_plan_api_creates_and_lists_steps(client):
     assert client.post("/api/plans", json={"title": "Empty", "steps": []}).status_code == 422
     changed = client.patch(f"/api/plans/{created.json()['id']}/steps/1", json={"status": "completed"})
     assert changed.status_code == 200 and changed.json()["steps"][0]["status"] == "completed"
+    detail = client.get(f"/api/plans/{created.json()['id']}")
+    assert detail.status_code == 200 and detail.json()["next_step"]["position"] == 2
     assert client.patch(f"/api/plans/{created.json()['id']}/steps/9", json={"status": "completed"}).status_code == 404
 
 

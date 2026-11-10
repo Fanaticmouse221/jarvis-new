@@ -426,6 +426,13 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 
+    @api.get("/plans/{plan_id}")
+    def get_plan(plan_id: int) -> dict[str, Any]:
+        plan = rt.store.get_plan(plan_id)
+        if plan is None:
+            raise HTTPException(404, "Plan not found.")
+        return plan
+
     @api.post("/plans")
     def create_plan(body: PlanCreate) -> dict[str, Any]:
         try:
