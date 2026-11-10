@@ -597,6 +597,14 @@ class Store:
             row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
         return dict(row)
 
+    def delete_todo(self, todo_id: int) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
+            if row is None:
+                return None
+            conn.execute("DELETE FROM todos WHERE id = ?", (todo_id,))
+        return dict(row)
+
     # ----- usage ---------------------------------------------------------
 
     def record_usage(

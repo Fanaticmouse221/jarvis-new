@@ -7,5 +7,7 @@ if errorlevel 1 (echo. & echo Update failed. See the message above. & pause & ex
 where uv >nul 2>nul || (echo uv was not found. Run setup.bat first. & pause & exit /b 1)
 uv sync
 echo.
-echo JARVIS is up to date. Start it with start.bat.
+echo JARVIS is up to date.
+if /i "%~1"=="/silent" exit /b 0
+echo Start it with start.bat.
 pause

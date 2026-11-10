@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from jarvis.tools.base import RISK_ACT, RISK_READ, Tool, ToolContext, ToolError, ToolResult, obj
+from jarvis.tools.base import RISK_ACT, RISK_READ, RISK_SENSITIVE, Tool, ToolContext, ToolError, ToolResult, obj
 
 
 async def add_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
@@ -40,6 +40,13 @@ async def change_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     return ToolResult(True, f"{verb} to-do #{todo['id']}: {todo['title']}", data={"todo": todo})
 
 
+async def delete_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    todo = ctx.services["store"].delete_todo(args["id"])
+    if todo is None:
+        raise ToolError("That to-do was not found. Use list_todos to check its number.")
+    return ToolResult(True, f"Deleted to-do #{todo['id']}: {todo['title']}", data={"todo": todo})
+
+
 TOOLS = [
     Tool(
         "add_todo", "tasks", "Add a to-do",
@@ -59,5 +66,11 @@ TOOLS = [
         "Complete or reopen a to-do by number.",
         obj({"id": {"type": "integer", "minimum": 1}, "status": {"type": "string", "enum": ["completed", "pending"]}}, ["id", "status"]),
         RISK_ACT, change_todo, lambda a: f"{'Complete' if a.get('status') == 'completed' else 'Reopen'} to-do #{a.get('id', '?')}",
+    ),
+    Tool(
+        "delete_todo", "tasks", "Delete a to-do",
+        "Permanently delete a to-do by number. This always requires approval.",
+        obj({"id": {"type": "integer", "minimum": 1}}, ["id"]),
+        RISK_SENSITIVE, delete_todo, lambda a: f"Delete to-do #{a.get('id', '?')}",
     ),
 ]

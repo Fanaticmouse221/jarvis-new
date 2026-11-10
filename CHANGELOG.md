@@ -22,6 +22,7 @@
   approved folders, refuse move overwrites and never recursively delete folders.
 - Added optional due dates to to-dos, with UTC storage and overdue highlighting
   in the To-dos page.
+- `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach
 
