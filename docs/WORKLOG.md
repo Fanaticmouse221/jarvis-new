@@ -6,6 +6,18 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Visible plan resume state
+
+**Done:** plan list results and the To-dos page now show the next pending step,
+so restart-safe progress is visible without another lookup.
+
+**Verified:** the full suite and browser regression are the final checks before
+this small interface/data presentation slice is committed.
+
+**Unverified:** automatic model-driven execution remains unbuilt.
+
+**Next:** run both validation suites, then commit and merge this slice.
+
 ## 10 Nov 2026 · GitHub Copilot · Plan cancellation and reopening
 
 **Done:** added reversible plan status changes. Active plans can be cancelled

@@ -29,6 +29,8 @@ async def list_plans(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     lines = []
     for plan in plans:
         lines.append(f"Plan #{plan['id']} [{plan['status']}] {plan['title']}")
+        if plan.get("next_step"):
+            lines.append(f"  Next: {plan['next_step']['position']}. {plan['next_step']['title']}")
         for step in plan["steps"]:
             marker = "x" if step["status"] == "completed" else " "
             lines.append(f"  [{marker}] {step['position']}. {step['title']}")

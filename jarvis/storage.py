@@ -728,6 +728,9 @@ class Store:
         for plan in plans:
             item = dict(plan)
             item["steps"] = grouped.get(int(plan["id"]), [])
+            item["next_step"] = next(
+                (step for step in item["steps"] if step["status"] == "pending"), None
+            )
             result.append(item)
         return result
 

@@ -18,6 +18,7 @@ def test_plan_storage_survives_listing(runtime):
     listed = runtime.store.list_plans()
     assert listed[0]["title"] == "Revise chemistry"
     assert [step["title"] for step in listed[0]["steps"]] == ["Review notes", "Do practice questions"]
+    assert listed[0]["next_step"]["title"] == "Review notes"
     assert runtime.store.list_plans("completed") == []
     assert runtime.store.get_plan(plan["id"])["next_step"]["position"] == 1
     completed = runtime.store.update_plan_step(plan["id"], 1, "completed")
@@ -55,6 +56,7 @@ def test_plan_tools_use_normal_agent_path(settings):
     )
     assert "Revise chemistry" in result.text
     assert "Review notes" in result.text
+    assert "Next: 1. Review notes" in result.text
     assert len(provider.calls) == 4
 
 
