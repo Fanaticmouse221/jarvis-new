@@ -12,6 +12,12 @@
 - Added clear handling for missing keys, denied microphone access, empty or
   oversized recordings, rate limits and provider failures.
 
+## 2.3.0 (in development): Tasks
+
+- Added durable SQLite-backed to-dos with add, list, complete and reopen actions.
+- Added a To-dos page alongside Chat, Memory, Activity and Settings.
+- JARVIS can manage the same to-dos through the normal permission-aware agent path.
+
 ## 2.1.0 (2026-11-10): Reach
 
 - Channel-aware conversations, dynamic tool risks and background service lifecycle.

@@ -82,6 +82,11 @@ class TelegramTokenRequest(BaseModel):
     token: str = Field(min_length=20, max_length=300)
 
 
+class TodoCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    details: str = Field(default="", max_length=2000)
+
+
 class MemoryCreate(BaseModel):
     content: str
     kind: str = "note"
@@ -393,6 +398,31 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         if not rt.reminders.cancel(reminder_id):
             raise HTTPException(404, "Pending reminder not found.")
         return {"ok": True}
+
+    @api.get("/todos")
+    def list_todos(status: str = "pending") -> list[dict[str, Any]]:
+        try:
+            return rt.store.list_todos(status)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @api.post("/todos")
+    def create_todo(body: TodoCreate) -> dict[str, Any]:
+        try:
+            return rt.store.create_todo(body.title, body.details)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @api.patch("/todos/{todo_id}")
+    async def update_todo(todo_id: int, request: Request) -> dict[str, Any]:
+        body = await request.json()
+        status = body.get("status")
+        if status not in ("pending", "completed"):
+            raise HTTPException(422, "Status must be pending or completed.")
+        todo = rt.store.update_todo_status(todo_id, status)
+        if todo is None:
+            raise HTTPException(404, "To-do not found.")
+        return todo
 
     @api.get("/notices")
     def notices(after: int = 0) -> dict[str, Any]:

@@ -198,6 +198,16 @@ def test_settings_endpoint_validates_and_reloads_models(client):
     assert {tool["name"]: tool for tool in client.get("/api/tools").json()}["remember"]["policy"] == "off"
 
 
+def test_todo_api_persists_and_changes_status(client):
+    created = client.post("/api/todos", json={"title": "Buy milk", "details": "Corner shop"})
+    assert created.status_code == 200
+    todo_id = created.json()["id"]
+    assert client.get("/api/todos").json()[0]["title"] == "Buy milk"
+    changed = client.patch(f"/api/todos/{todo_id}", json={"status": "completed"})
+    assert changed.status_code == 200 and changed.json()["status"] == "completed"
+    assert client.get("/api/todos?status=pending").json() == []
+
+
 def test_adding_a_key_verifies_it_saves_it_and_selects_models(tmp_path, monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     runtime = Runtime(make_settings(tmp_path, "groq:openai/gpt-oss-120b,groq:llama-3.1-8b-instant"), launcher=FakeLauncher())

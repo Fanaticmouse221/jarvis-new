@@ -215,6 +215,7 @@ p { margin: 0; }
 .voice-btn { flex: none; width: 38px; height: 38px; }
 .voice-btn.recording { color: var(--danger); background: var(--surface-2); animation: voice-pulse 1.2s ease-in-out infinite; }
 .voice-status { flex: none; max-width: 130px; overflow: hidden; color: var(--text-3); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.todo-done { color: var(--text-3); text-decoration: line-through; }
 @keyframes voice-pulse { 50% { box-shadow: 0 0 0 5px var(--cyan-soft); } }
 
 /* ---------- rendered replies ---------- */

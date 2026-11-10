@@ -108,6 +108,21 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX idx_reminders_due ON reminders(status, due_at);
     """,
+    # v4: persistent to-dos
+    """
+    CREATE TABLE todos (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        title            TEXT NOT NULL,
+        details          TEXT NOT NULL DEFAULT '',
+        status           TEXT NOT NULL DEFAULT 'pending'
+                         CHECK (status IN ('pending', 'completed')),
+        conversation_id  TEXT REFERENCES conversations(id) ON DELETE SET NULL,
+        created_at       TEXT NOT NULL,
+        updated_at       TEXT NOT NULL,
+        completed_at     TEXT
+    );
+    CREATE INDEX idx_todos_status_updated ON todos(status, updated_at DESC);
+    """,
 ]
 
 FTS_SETUP = """
@@ -509,6 +524,52 @@ class Store:
             run["args"] = json.loads(run["args"]) if run["args"].startswith("{") and run["args"].endswith("}") else {}
         return runs
 
+    # ----- to-dos --------------------------------------------------------
+
+    def create_todo(self, title: str, details: str = "", conversation_id: str | None = None) -> dict[str, Any]:
+        title, details = title.strip(), details.strip()
+        if not title:
+            raise ValueError("A to-do needs a title.")
+        if len(title) > 500:
+            raise ValueError("To-do titles are limited to 500 characters.")
+        if len(details) > 2000:
+            raise ValueError("To-do details are limited to 2,000 characters.")
+        now = utc_now()
+        with self._connect() as conn:
+            cursor = conn.execute(
+                "INSERT INTO todos (title, details, conversation_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (title, details, conversation_id, now, now),
+            )
+            row = conn.execute("SELECT * FROM todos WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        return dict(row)
+
+    def list_todos(self, status: str = "pending") -> list[dict[str, Any]]:
+        if status not in ("pending", "completed", "all"):
+            raise ValueError("Unknown to-do status.")
+        where = "" if status == "all" else "WHERE status = ? "
+        params: tuple[Any, ...] = () if status == "all" else (status,)
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM todos " + where + "ORDER BY status, updated_at DESC, id DESC LIMIT 200",
+                params,
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_todo_status(self, todo_id: int, status: str) -> dict[str, Any] | None:
+        if status not in ("pending", "completed"):
+            raise ValueError("Unknown to-do status.")
+        now = utc_now()
+        completed_at = now if status == "completed" else None
+        with self._connect() as conn:
+            changed = conn.execute(
+                "UPDATE todos SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?",
+                (status, now, completed_at, todo_id),
+            )
+            if not changed.rowcount:
+                return None
+            row = conn.execute("SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
+        return dict(row)
+
     # ----- usage ---------------------------------------------------------
 
     def record_usage(
@@ -544,5 +605,5 @@ class Store:
         with self._connect() as conn:
             return {
                 table: conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-                for table in ("conversations", "messages", "memories", "tool_runs")
+                for table in ("conversations", "messages", "memories", "tool_runs", "todos")
             }

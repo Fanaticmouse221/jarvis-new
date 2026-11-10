@@ -6,6 +6,28 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · 2.3 to-dos foundation
+
+**Done:** moved on from Telegram voice notes as requested and added the first
+2.3 Tasks slice. SQLite migration v4 stores durable to-dos with pending and
+completed states; `add_todo`, `list_todos` and `change_todo` use the standard
+agent permissions, action log and conversation context. Added protected API
+routes and a To-dos page for direct add, complete and reopen actions. Telegram
+text support was left unchanged.
+
+**Verified:** `uv run pytest -q` passed **181 tests**. The browser regression
+passed **58 checks** with no console errors or warnings. Node syntax checks and
+`git diff --check` passed.
+
+**Unverified:** live-model interpretation of task phrases, live Groq access and
+Windows-only voice behaviour remain unverified. Closing apps and moving/deleting
+files are still not implemented.
+
+**Next:** add the remaining approval-aware computer/file actions for 2.3, then
+open the next pull request.
+
+---
+
 ## 10 Nov 2026 · GitHub Copilot · voice controls checkpoint
 
 **Done:** extended the browser voice foundation with visible listening,

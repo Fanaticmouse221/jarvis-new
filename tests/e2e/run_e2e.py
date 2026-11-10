@@ -157,6 +157,7 @@ def main() -> None:
             page.wait_for_selector(".setup")
             check(page.locator("#voiceBtn").count() == 1, "the chat composer exposes a microphone button")
             check(page.locator("#voiceStatus").count() == 1, "the chat composer exposes voice status feedback")
+            check(page.locator("a[data-nav='todos']").count() == 1, "the rail exposes the To-dos page")
             check("Connect a model" in page.inner_text(".setup"), "first run shows the setup panel, not a dead chat box")
             check("warn" in page.get_attribute("#railStatus .dot", "class"), "status light is amber while no model is ready")
             shot("01-first-run")

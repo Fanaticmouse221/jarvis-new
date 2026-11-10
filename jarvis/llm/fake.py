@@ -165,6 +165,17 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.fullmatch(r"cancel reminder #?(\d+)", lower)
     if match:
         return use("cancel_reminder", id=int(match.group(1)))
+    match = re.match(r"(?:add|create) (?:a )?to-?do:?\s+(.+)", text, re.I | re.S)
+    if match:
+        return use("add_todo", title=match.group(1).strip())
+    if lower in ("list to-dos", "list todos", "show to-dos", "show todos", "my to-dos", "my todos"):
+        return use("list_todos")
+    match = re.fullmatch(r"(?:complete|finish|done with) to-?do #?(\d+)", lower)
+    if match:
+        return use("change_todo", id=int(match.group(1)), status="completed")
+    match = re.fullmatch(r"reopen to-?do #?(\d+)", lower)
+    if match:
+        return use("change_todo", id=int(match.group(1)), status="pending")
     match = re.match(r"open (https?://\S+)", text, re.IGNORECASE)
     if match:
         return use("open_url", url=match.group(1))
