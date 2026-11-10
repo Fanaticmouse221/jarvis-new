@@ -199,9 +199,10 @@ def test_settings_endpoint_validates_and_reloads_models(client):
 
 
 def test_todo_api_persists_and_changes_status(client):
-    created = client.post("/api/todos", json={"title": "Buy milk", "details": "Corner shop"})
+    created = client.post("/api/todos", json={"title": "Buy milk", "details": "Corner shop", "due_at": "2026-11-11T08:30:00+10:00"})
     assert created.status_code == 200
     todo_id = created.json()["id"]
+    assert created.json()["due_at"] == "2026-11-10T22:30:00Z"
     assert client.get("/api/todos").json()[0]["title"] == "Buy milk"
     changed = client.patch(f"/api/todos/{todo_id}", json={"status": "completed"})
     assert changed.status_code == 200 and changed.json()["status"] == "completed"
