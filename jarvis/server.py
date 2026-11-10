@@ -29,6 +29,7 @@ import signal
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Optional
 from urllib.parse import urlparse
@@ -46,6 +47,7 @@ from jarvis.persona import greeting
 from jarvis.prefs import PERSONA_OPTIONS
 from jarvis.runtime import Runtime
 from jarvis.storage import MEMORY_KINDS
+from jarvis.telegram import TelegramError
 from jarvis.tools import GROUPS
 
 log = logging.getLogger("jarvis.server")
@@ -76,6 +78,10 @@ class ApprovalRequest(BaseModel):
     always: bool = False
 
 
+class TelegramTokenRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=300)
+
+
 class MemoryCreate(BaseModel):
     content: str
     kind: str = "note"
@@ -103,7 +109,15 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
     rt = runtime or Runtime(settings)
     local_only = settings.host in ("127.0.0.1", "localhost", "::1")
 
-    app = FastAPI(title="JARVIS", version=__version__, docs_url=None, redoc_url=None)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        await rt.start()
+        try:
+            yield
+        finally:
+            await rt.stop()
+
+    app = FastAPI(title="JARVIS", version=__version__, docs_url=None, redoc_url=None, lifespan=lifespan)
     app.state.runtime = rt
 
     def guard(request: Request) -> None:
@@ -204,6 +218,38 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         return await rt.check_models()
 
     # ----- conversations ---------------------------------------------------
+
+    @api.get("/telegram")
+    def telegram_state() -> dict[str, Any]:
+        return rt.telegram.status()
+
+    @api.post("/telegram/token")
+    async def telegram_token(body: TelegramTokenRequest) -> dict[str, Any]:
+        try:
+            return await rt.set_telegram_token(body.token)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        except TelegramError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.post("/telegram/unlink")
+    async def telegram_unlink() -> dict[str, Any]:
+        await rt.telegram.unlink()
+        return rt.telegram.status()
+
+    @api.post("/telegram/test")
+    async def telegram_test() -> dict[str, Any]:
+        try:
+            await rt.telegram.test_message()
+            return {"ok": True}
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        except TelegramError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.delete("/telegram")
+    async def telegram_remove() -> dict[str, Any]:
+        return await rt.remove_telegram()
 
     @api.get("/conversations")
     def list_conversations(q: str = "") -> list[dict[str, Any]]:
@@ -325,6 +371,22 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
 
     # ----- activity, tools, status -----------------------------------------
 
+    @api.get("/reminders")
+    def reminders() -> list[dict[str, Any]]:
+        return rt.reminders.list()
+
+    @api.delete("/reminders/{reminder_id}")
+    def cancel_reminder(reminder_id: int) -> dict[str, bool]:
+        if not rt.reminders.cancel(reminder_id):
+            raise HTTPException(404, "Pending reminder not found.")
+        return {"ok": True}
+
+    @api.get("/notices")
+    def notices(after: int = 0) -> dict[str, Any]:
+        recent = rt.reminders.notices()
+        return {"notices": [item for item in recent if item["seq"] > max(0, after)],
+                "seq": recent[-1]["seq"] if recent else 0}
+
     @api.get("/activity")
     def activity(limit: int = 200) -> dict[str, Any]:
         return {"runs": rt.store.list_tool_runs(min(max(limit, 1), 500)), "pending": rt.approvals.pending()}
@@ -359,6 +421,7 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
             "memory": {"enabled": prefs["memory_enabled"], "auto_learn": prefs["auto_learn"]},
             "apps": {"backend": rt.launcher.backend},
             "local_only": local_only,
+            "workspace": str(rt.settings.workspace),
         }
 
     @api.post("/shutdown")

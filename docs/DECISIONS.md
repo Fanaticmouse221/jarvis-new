@@ -157,3 +157,36 @@ framework, permissions and outside-content rule they need are already in place.
 which makes JARVIS feel like a program rather than a tab. Falls back to the
 default browser. Edge's built-in natural voices are also the best free option
 for spoken replies in 2.1.
+
+### D24. Telegram phone access via outbound long polling (2026-11-10)
+Jack chose Telegram. Plain httpx talks to the [Bot API](https://core.telegram.org/bots/api)
+with outbound requests only; the local web server stays on localhost. One private
+chat pairs with a short-lived local code; strangers and group chats are ignored.
+Approval buttons and /stop bypass the serial message queue. Bot credentials live
+only in .env and are redacted from HTTP logs. Phone replies use the same agent,
+memory, personality and permissions. Bot chats are not end-to-end encrypted and
+the PC must remain on. Telegram service behaviour was checked with a fake API;
+a live phone link remains unverified.
+
+### D25. Keyless metasearch with ddgs (2026-11-10)
+Use [ddgs 9.16.1](https://pypi.org/project/ddgs/) (MIT, Python 3.10+) for
+small search results without an API key or paid service. Search can be throttled
+or change upstream; failures must be reported honestly. Page reading uses httpx,
+checks every resolved address and redirect, pins the public connection IP while
+preserving TLS SNI/Host, ignores environment proxies, and caps downloaded content.
+All external content is untrusted, so subsequent actions need approval.
+
+### D26. Open-Meteo weather (2026-11-10)
+Use [Open-Meteo](https://open-meteo.com/en/pricing) geocoding and forecast APIs:
+free for non-commercial use, no key, under 10,000 daily requests. Return source
+attribution and local forecast time. Home city is an editable preference; ask for
+a place when none is configured. A live Brisbane request succeeded before testing
+was stopped. Revisit licensing and limits before commercial use.
+
+### D27. Bounded local document extraction (2026-11-10)
+Use [pypdf 7](https://pypi.org/project/pypdf/) (BSD-3-Clause, Python 3.10+) for
+PDF text. Word/PowerPoint use stdlib ZIP/XML. Bound input sizes, pages, decompression
+and parser work; scanned PDFs need OCR, which is not implemented. Files stay inside
+resolved approved roots, with credential names and hardlink aliases refused. Open
+file accepts documents/images only; scripts and shortcuts could execute code.
+Creating/appending text is an act; overwriting is always sensitive.

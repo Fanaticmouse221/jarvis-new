@@ -127,6 +127,44 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.match(r"(?:what|when) did we (?:discuss|talk about|say about) (.+?)\??$", lower)
     if match:
         return use("search_conversations", query=match.group(1))
+    match = re.match(r"(?:search (?:the )?web for|web search) (.+)", text, re.I)
+    if match:
+        return use("web_search", query=match.group(1))
+    match = re.match(r"read page (https?://\S+)", text, re.I)
+    if match:
+        return use("read_page", url=match.group(1))
+    match = re.fullmatch(r"(?:what(?:'s| is) the )?weather(?: in (.+?))?\??", text, re.I)
+    if match:
+        return use("get_weather", **({"place": match.group(1)} if match.group(1) else {}))
+    match = re.match(r"calculate (.+)", text, re.I)
+    if match:
+        return use("calculate", expression=match.group(1))
+    match = re.fullmatch(r"list files(?: in (.+))?", text, re.I)
+    if match:
+        return use("list_files", **({"folder": match.group(1)} if match.group(1) else {}))
+    match = re.match(r"read file (.+)", text, re.I)
+    if match:
+        return use("read_file", path=match.group(1))
+    match = re.match(r"(create|append|overwrite) file (.+?): (.*)", text, re.I | re.S)
+    if match:
+        return use("write_file", mode=match.group(1).lower(), path=match.group(2), content=match.group(3))
+    match = re.match(r"open file (.+)", text, re.I)
+    if match:
+        return use("open_file", path=match.group(1))
+    match = re.fullmatch(r"(?:pc )?(play_pause|next|previous|volume_up|volume_down|mute|lock)", lower)
+    if match:
+        return use("pc_control", action=match.group(1))
+    match = re.fullmatch(r"set volume to (\d+)(?:%)?", lower)
+    if match:
+        return use("pc_control", action="set_volume", value=int(match.group(1)))
+    match = re.match(r"remind me in (\d+(?:\.\d+)?) minutes? to (.+)", text, re.I | re.S)
+    if match:
+        return use("set_reminder", in_minutes=float(match.group(1)), text=match.group(2))
+    if lower in ("list reminders", "show reminders", "my reminders"):
+        return use("list_reminders")
+    match = re.fullmatch(r"cancel reminder #?(\d+)", lower)
+    if match:
+        return use("cancel_reminder", id=int(match.group(1)))
     match = re.match(r"open (https?://\S+)", text, re.IGNORECASE)
     if match:
         return use("open_url", url=match.group(1))

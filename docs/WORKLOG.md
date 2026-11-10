@@ -6,6 +6,88 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · ChatGPT/Codex · reminders checkpoint
+
+**Done:** persistent one-off/daily/weekday/weekly reminders, 15-second scheduler,
+start-up delivery of missed reminders, durable app notices, linked-phone delivery
+with conversation context, and best-effort Windows toast. Added protected list,
+cancel and notices routes, Settings list, app banners, and demo reminder phrases.
+The outbox retains 500 occurrences, the app feed exposes the newest 200, and
+pending phone retries expire after seven days. Sends are bound to the paired owner.
+
+**Evidence / limits:** 13 earlier reminder unit tests passed; later focused plumbing
+and reminder run passed 22. Final owner/retention fixes and all integration/UI
+changes are unverified, as requested. Actual Windows toast delivery was not tried.
+Telegram cannot promise exactly-once sends if the process dies after sending but
+before recording its acknowledgement.
+
+**Next:** finish version 2.1 documentation and make PR #4 ready for review.
+
+---
+
+## 10 Nov 2026 · ChatGPT/Codex · new tools checkpoint
+
+**Done:** registered search, public page reading with pinned DNS/redirect checks,
+weather, calculator, approved-folder file tools and Windows media/volume/lock.
+Added Home city and Folders settings, compact schemas and demo phrases. Overwrite
+always requests approval; file text preserves whitespace. pypdf and ddgs are the
+only new direct dependencies. Reminder tools are wired in the next checkpoint.
+
+**Evidence / limits:** earlier 67 tool tests and live read-only search/page/weather
+probes passed. A later PDF resource-limit test exposed an invalid blank-PDF fixture;
+its fixture was corrected statically. That correction, final PDF limits, registration
+and UI integration are unverified because Jack asked to stop all testing. Windows
+controls used fakes only; no real lock or volume command was issued.
+
+**Next:** integrate scheduler, reminders list, durable app notices, then release docs.
+
+---
+
+## 10 Nov 2026 · ChatGPT/Codex · Telegram checkpoint
+
+**Done:** private owner pairing with limited guesses, outbound long polling,
+queued shared-agent turns, independent approval callbacks and stop, phone-format
+replies, safe HTML fallback, token verification/persistence, protected API and
+Phone settings. Draft pull request: https://github.com/Fanaticmouse221/jarvis/pull/4.
+
+**Verified before Jack stopped testing:** full working-tree suite passed 175
+tests, including the new tool/reminder modules being prepared for later commits;
+15 Telegram service tests and 2 protected API/token tests were covered. The extended
+browser run had also finished with 51 checks before testing stopped, including
+12 phone-flow checks. Its phone screenshots were not subsequently inspected.
+No live bot credentials were used.
+
+**Unverified / instruction:** Jack explicitly said "no need to test itll be fine
+stop testing". All further testing stopped; subsequent fixes and integration
+are implementation only, not a claim of a tested release. Owner/generation binding
+for asynchronous reminder sends and resilient unexpected-error handling were added
+after the last run. The extended browser
+runner is included for later use. OneDrive dependency locks were avoided by using
+an isolated temporary Python environment for the completed checks.
+
+**Next:** register the new tools, finish reminder/UI integration and release docs.
+
+---
+
+## 10 Nov 2026, 11:00 AM · ChatGPT/Codex · plumbing checkpoint
+
+**Done:** created `codex/jarvis-2.1-reach` from merged `main`. Added schema v3,
+conversation channels, per-call risk assessment, dynamic missing capabilities,
+phone-specific formatting context and server lifecycle management. Made the
+browser runner portable to Windows with an isolated launcher that starts a real
+Python subprocess and verifies its marker file; it never deletes an existing run.
+
+**Verified:** original 67 tests passed before changes; 76 passed after plumbing.
+Chrome browser run passed all 39 checks, including restart, approvals and memory.
+Inspected desktop approval and mobile conversation screenshots.
+
+**Unverified:** live Telegram, live Groq and Windows Start-menu launch. The browser
+launcher deliberately uses an isolated test application.
+
+**Next:** item 2 Telegram service, protected API, phone settings and fake-API tests.
+
+---
+
 ## 10 Nov 2026, 11:00 AM · Claude · branch `jarvis-2.1`
 
 **Done**

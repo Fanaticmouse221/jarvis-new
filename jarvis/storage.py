@@ -90,6 +90,24 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (day, model)
     );
     """,
+    # v3: conversation channels and persistent reminders
+    """
+    ALTER TABLE conversations ADD COLUMN source TEXT NOT NULL DEFAULT 'app'
+        CHECK (source IN ('app', 'telegram'));
+    CREATE TABLE reminders (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        text             TEXT NOT NULL,
+        due_at           TEXT NOT NULL,
+        repeat           TEXT NOT NULL DEFAULT 'none'
+                         CHECK (repeat IN ('none', 'daily', 'weekdays', 'weekly')),
+        status           TEXT NOT NULL DEFAULT 'pending'
+                         CHECK (status IN ('pending', 'sent', 'cancelled')),
+        conversation_id  TEXT REFERENCES conversations(id) ON DELETE SET NULL,
+        created_at       TEXT NOT NULL,
+        sent_at          TEXT
+    );
+    CREATE INDEX idx_reminders_due ON reminders(status, due_at);
+    """,
 ]
 
 FTS_SETUP = """
@@ -190,20 +208,22 @@ class Store:
 
     # ----- conversations -------------------------------------------------
 
-    def create_conversation(self, title: str = "New conversation") -> dict[str, Any]:
+    def create_conversation(self, title: str = "New conversation", source: str = "app") -> dict[str, Any]:
+        if source not in ("app", "telegram"):
+            raise ValueError("Conversation source must be app or telegram.")
         now = utc_now()
-        conv = {"id": uuid.uuid4().hex, "title": title, "created_at": now, "updated_at": now}
+        conv = {"id": uuid.uuid4().hex, "title": title, "created_at": now, "updated_at": now, "source": source}
         with self._connect() as conn:
             conn.execute(
-                "INSERT INTO conversations (id, title, created_at, updated_at) "
-                "VALUES (:id, :title, :created_at, :updated_at)",
+                "INSERT INTO conversations (id, title, created_at, updated_at, source) "
+                "VALUES (:id, :title, :created_at, :updated_at, :source)",
                 conv,
             )
         return conv
 
     def list_conversations(self, limit: int = 200, query: str = "") -> list[dict[str, Any]]:
         sql = (
-            "SELECT c.id, c.title, c.created_at, c.updated_at, "
+            "SELECT c.id, c.title, c.created_at, c.updated_at, c.source, "
             "       (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) AS message_count "
             "FROM conversations c {where} ORDER BY c.updated_at DESC, c.rowid DESC LIMIT ?"
         )
@@ -223,7 +243,7 @@ class Store:
     def get_conversation(self, conversation_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT id, title, created_at, updated_at, summary, summary_upto FROM conversations WHERE id = ?",
+                "SELECT id, title, created_at, updated_at, source, summary, summary_upto FROM conversations WHERE id = ?",
                 (conversation_id,),
             ).fetchone()
         return dict(row) if row else None

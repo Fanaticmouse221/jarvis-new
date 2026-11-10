@@ -80,6 +80,7 @@ class Prefs:
             "ask_every_action": False,
             "tool_policy": {},
             "allowed_folders": [],
+            "home_city": "",
             "max_steps": 8,
             "daily_request_limit": 0,
         }
@@ -115,6 +116,8 @@ class Prefs:
     def _clean(self, key: str, value: Any, current: dict[str, Any]) -> Any:
         if key == "user_name":
             return _text(value, 60, "Name")
+        if key == "home_city":
+            return _text(value, 100, "Home city")
         if key == "user_title":
             return _text(value, 30, "Form of address")
         if key == "custom_instructions":

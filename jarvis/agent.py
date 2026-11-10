@@ -120,8 +120,11 @@ class Agent:
         *,
         regenerate: bool = False,
         edit_message_id: int | None = None,
+        channel: str = "app",
     ) -> dict[str, Any]:
         """Validate the request and put the conversation in the right state to be answered."""
+        if channel not in ("app", "telegram"):
+            raise ValueError("Channel must be app or telegram.")
         text = text.strip()
         if not regenerate:
             if not text:
@@ -136,7 +139,7 @@ class Agent:
         elif regenerate or edit_message_id is not None:
             raise ValueError("That needs an existing conversation.")
         else:
-            conversation = self.store.create_conversation(make_title(text))
+            conversation = self.store.create_conversation(make_title(text), source=channel)
 
         if regenerate:
             messages = self.store.get_messages(conversation["id"])
@@ -157,7 +160,7 @@ class Agent:
     # ----- context --------------------------------------------------------
 
     def build_context(
-        self, conversation: dict[str, Any], prefs: dict[str, Any], tool_names: list[str]
+        self, conversation: dict[str, Any], prefs: dict[str, Any], tool_names: list[str], channel: str = "app"
     ) -> tuple[list[ChatMessage], list[dict[str, Any]], str]:
         """Returns (messages for the model, messages that no longer fit, the user's latest text)."""
         history = self.store.get_messages(conversation["id"])
@@ -197,6 +200,7 @@ class Agent:
             omitted_memories=known.omitted,
             summary=(conversation.get("summary") or "") if older else "",
             recent_titles=recent,
+            channel=channel,
         )
         messages = [ChatMessage("system", system)]
 
@@ -250,14 +254,15 @@ class Agent:
 
     # ----- tools ----------------------------------------------------------
 
-    def _approval_reason(self, tool: Tool, prefs: dict[str, Any], ctx: ToolContext) -> str | None:
+    def _approval_reason(self, tool: Tool, prefs: dict[str, Any], ctx: ToolContext, risk: str | None = None) -> str | None:
         """Why this call needs the user's OK, or None if it may simply run."""
         policy = self.registry.policy(tool, prefs)
-        if tool.risk == RISK_SENSITIVE:
+        risk = risk or tool.risk
+        if risk == RISK_SENSITIVE:
             return "This can't easily be undone."
         if policy == "ask":
             return "You've set this action to ask first."
-        if tool.risk == RISK_READ:
+        if risk == RISK_READ:
             return None
         if prefs["ask_every_action"]:
             return "You've asked to approve every action."
@@ -289,6 +294,19 @@ class Agent:
             args, invalid = validate_args(tool.parameters, raw)
             problem = f"Invalid arguments: {invalid}." if invalid else None
 
+        risk = tool.risk if tool else RISK_READ
+        if not problem and tool is not None:
+            if self.registry.policy(tool, prefs) == "off":
+                problem = "This tool has been switched off."
+            else:
+                try:
+                    risk = tool.effective_risk(args, ctx)
+                except ToolError as exc:
+                    problem = str(exc)
+                except Exception:
+                    log.exception("Tool %s risk assessment crashed", tool.name)
+                    problem = "The tool could not assess this action safely; it was not run."
+
         part: dict[str, Any] = {
             "type": "tool",
             "id": uuid.uuid4().hex[:8],
@@ -296,7 +314,7 @@ class Agent:
             "label": tool.label if tool else call.name,
             "title": tool.describe(args or (raw if isinstance(raw, dict) else {})) if tool else f"Unknown tool “{call.name}”",
             "args": args,
-            "risk": tool.risk if tool else RISK_READ,
+            "risk": risk,
             "status": "running",
         }
         parts.append(part)
@@ -306,9 +324,9 @@ class Agent:
         decision = "auto"
         duration_ms = 0
         if result is None and tool is not None:
-            reason = self._approval_reason(tool, prefs, ctx)
+            reason = self._approval_reason(tool, prefs, ctx, risk)
             if reason:
-                can_always = tool.risk != RISK_SENSITIVE and not ctx.tainted and not prefs["ask_every_action"]
+                can_always = risk != RISK_SENSITIVE and not ctx.tainted and not prefs["ask_every_action"]
                 approval_id, future = self.approvals.open(
                     {"tool": tool.name, "title": part["title"], "reason": reason, "conversation_id": ctx.conversation_id}
                 )
@@ -395,11 +413,15 @@ class Agent:
         content = "\n\n".join(part["text"].strip() for part in parts if part["type"] == "text")
         return self.store.add_message(conversation_id, "assistant", content, model, parts)
 
-    async def run_turn(self, conversation: dict[str, Any], prefer: str | None = None) -> AsyncIterator[dict[str, Any]]:
+    async def run_turn(
+        self, conversation: dict[str, Any], prefer: str | None = None, channel: str = "app"
+    ) -> AsyncIterator[dict[str, Any]]:
         """Answer the latest user message. Yields events for the interface."""
+        if channel not in ("app", "telegram"):
+            raise ValueError("Channel must be app or telegram.")
         conversation_id = conversation["id"]
         prefs = self.prefs.all()
-        ctx = ToolContext(conversation_id, uuid.uuid4().hex[:12], self.services)
+        ctx = ToolContext(conversation_id, uuid.uuid4().hex[:12], self.services, channel=channel)
         tools = {tool.name: tool for tool in self.registry.enabled(prefs)}
         schemas = [tool.schema() for tool in tools.values()] or None
         asked = [m["id"] for m in self.store.get_messages(conversation_id) if m["role"] == "user"]
@@ -411,7 +433,7 @@ class Agent:
         saved = False
         try:
             try:
-                messages, dropped, user_text = self.build_context(conversation, prefs, list(tools))
+                messages, dropped, user_text = self.build_context(conversation, prefs, list(tools), channel=channel)
                 turn_start = len(messages) - 1
                 max_steps = prefs["max_steps"]
                 for step in range(max_steps + 1):
