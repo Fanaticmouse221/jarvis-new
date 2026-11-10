@@ -12,7 +12,8 @@ import logging
 import secrets
 import time
 from collections import deque
-from typing import Any, Coroutine
+from contextlib import aclosing
+from typing import Any, AsyncIterator, Coroutine
 
 import httpx
 
@@ -148,6 +149,71 @@ class Runtime:
 
     def memory_changes(self, after: int = 0) -> list[dict[str, Any]]:
         return [change for change in self._changes if change["seq"] > after]
+
+    async def execute_plan_step(self, plan_id: int, prefer: str | None = None) -> AsyncIterator[dict[str, Any]]:
+        """Run one claimed plan step through the ordinary agent turn path."""
+        claimed = self.store.claim_plan_step(plan_id)
+        if claimed is None:
+            raise ValueError("That plan was not found.")
+        step = claimed["next_step"]
+        if step is None:
+            return
+
+        conversation_id = claimed["conversation_id"]
+        if conversation_id is None:
+            conversation = self.store.create_conversation(f"Plan: {claimed['title']}")
+            self.store.attach_plan_conversation(plan_id, conversation["id"])
+        else:
+            conversation = self.store.get_conversation(conversation_id)
+            if conversation is None:
+                self.store.finish_plan_step(
+                    plan_id, step["position"], claimed["execution_token"], success=False,
+                    error="The plan's conversation no longer exists.",
+                )
+                raise ValueError("The plan's conversation no longer exists.")
+        if conversation["id"] in self.active:
+            self.store.finish_plan_step(
+                plan_id, step["position"], claimed["execution_token"], success=False,
+                error="That conversation is already answering.",
+            )
+            raise ValueError("That plan conversation is already answering.")
+
+        prompt = (
+            f"Continue the plan “{claimed['title']}”. Work on step {step['position']} "
+            f"of {len(claimed['steps'])}: {step['title']}. "
+            "Use the available tools when needed and report honestly if the step cannot be completed."
+        )
+        conversation = self.agent.start_turn(conversation["id"], prompt)
+
+        self.active.add(conversation["id"])
+        completed = False
+        failed = False
+        try:
+            async with aclosing(self.agent.run_turn(conversation, prefer=prefer)) as events:
+                async for event in events:
+                    if event["type"] == "tool_end" and event["step"]["status"] in ("error", "denied"):
+                        failed = True
+                    if event["type"] == "error":
+                        failed = True
+                    if event["type"] == "done":
+                        completed = True
+                    yield event
+        finally:
+            self.active.discard(conversation["id"])
+            if completed and not failed:
+                self.store.finish_plan_step(
+                    plan_id, step["position"], claimed["execution_token"], success=True
+                )
+            elif not completed:
+                self.store.finish_plan_step(
+                    plan_id, step["position"], claimed["execution_token"], success=False,
+                    error="The plan step was interrupted before the agent finished.",
+                )
+            elif failed:
+                self.store.finish_plan_step(
+                    plan_id, step["position"], claimed["execution_token"], success=False,
+                    error="The agent reported that one or more actions failed.",
+                )
 
     @property
     def change_seq(self) -> int:

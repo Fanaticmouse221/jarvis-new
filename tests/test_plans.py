@@ -60,6 +60,37 @@ def test_plan_step_execution_is_reclaimable_after_restart(runtime, settings):
     assert completed["running_step"] is None
 
 
+def test_plan_step_runs_through_normal_agent_context(settings):
+    runtime, provider = scripted_runtime(settings, [text("The checks are complete.")])
+    plan = runtime.store.create_plan("Release", ["Run the checks"])
+
+    async def go():
+        return [event async for event in runtime.execute_plan_step(plan["id"])]
+
+    events = asyncio.run(go())
+    assert events[-1]["type"] == "done"
+    saved = runtime.store.get_plan(plan["id"])
+    assert saved["status"] == "completed"
+    assert saved["conversation_id"] is not None
+    user_message = runtime.store.get_messages(saved["conversation_id"])[0]
+    assert "Run the checks" in user_message["content"]
+    assert provider.calls[0][0][0].role == "system"
+    assert "JARVIS" in provider.calls[0][0][0].content
+
+
+def test_plan_step_failure_is_persisted(settings):
+    runtime, _ = scripted_runtime(settings, [call("open_app", name="not-a-real-app")], [text("It failed.")])
+    plan = runtime.store.create_plan("Open app", ["Open the app"])
+    async def go():
+        return [event async for event in runtime.execute_plan_step(plan["id"])]
+
+    events = asyncio.run(go())
+    assert events[-1]["type"] == "done"
+    saved = runtime.store.get_plan(plan["id"])
+    assert saved["status"] == "active"
+    assert saved["next_step"]["execution_status"] == "failed"
+
+
 def test_plan_storage_validates_steps(runtime):
     with pytest.raises(ValueError, match="at least one"):
         runtime.store.create_plan("Empty", [])

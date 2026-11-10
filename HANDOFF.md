@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #17](https://github.com/Fanaticmouse221/jarvis/pull/17). 3.0 durable plans, step state, visible controls, resume lookup, cancellation, reopening and next-step visibility are merged through [PR #23](https://github.com/Fanaticmouse221/jarvis/pull/23). The current branch adds restart-safe execution checkpoints and token-guarded step completion. |
-| Tests | `uv run pytest -q`: **195 passed**. Browser regression: **68 checks passed**. Python/JavaScript syntax and `git diff --check` passed. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #17](https://github.com/Fanaticmouse221/jarvis/pull/17). 3.0 durable plans, step state, visible controls, resume lookup, cancellation, reopening, next-step visibility and restart-safe checkpoints are merged through [PR #24](https://github.com/Fanaticmouse221/jarvis/pull/24). The current branch adds internal one-step execution through the normal agent path. |
+| Tests | `uv run pytest -q`: **197 passed**. Browser regression: **68 checks passed**. Python/JavaScript syntax and `git diff --check` passed. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 and later (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -247,11 +247,10 @@ brain and the browser run can exercise them.
    unverified here.
 2. Verify the `start.bat` update-then-start flow on Jack's Windows PC after
    pulling the merged changes.
-3. Continue 3.0 with automatic model-driven plan execution. The current merged
-   slice has restart-safe checkpoints in `storage.py` (`claim_plan_step` and
-   `finish_plan_step`) plus matching tools and API routes. Preserve memory,
-   personality, approvals and outside-content taint rules when connecting a
-   claimed step to an agent turn.
+3. Continue 3.0 by exposing `Runtime.execute_plan_step` through a controlled
+   streaming API/UI action. The method now claims a step and uses the ordinary
+   agent path, but it is not yet exposed to Jack. Preserve memory, personality,
+   approvals and outside-content taint rules when adding the interface.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.

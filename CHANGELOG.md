@@ -38,6 +38,8 @@
 - Plan listings now show the next pending step when one exists.
 - Plan steps now have restart-safe execution checkpoints: interrupted attempts can
   be reclaimed, completed with a token, or recorded as failed for retry.
+- The runtime can now execute one claimed plan step through the ordinary agent
+  turn, preserving memory, personality, permissions and approvals.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach

@@ -6,6 +6,23 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · One-step plan execution
+
+**Done:** the runtime now claims one plan step, creates or reuses its linked
+conversation, and runs the step through the ordinary agent turn. Successful
+turns complete the step; tool failures, denials, model errors and interruption
+are persisted as a retryable failure.
+
+**Verified:** `uv run pytest -q` passed **197 tests**; the browser regression
+passed **68 checks**; Python syntax and `git diff --check` passed.
+
+**Unverified:** the new runtime execution path is not yet exposed in the
+interface or browser regression; live-model behaviour and Windows-only paths
+remain unverified.
+
+**Next:** run the full suite and browser regression, then expose this operation
+through a controlled API/UI action with streaming approval support.
+
 ## 10 Nov 2026 · GitHub Copilot · Restart-safe plan execution checkpoints
 
 **Done:** added schema v7 execution fields to plan steps, atomic claim/reclaim
