@@ -55,6 +55,21 @@ async def delete_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     return ToolResult(True, f"Deleted to-do #{todo['id']}: {todo['title']}", data={"todo": todo})
 
 
+async def edit_todo(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    try:
+        todo = ctx.services["store"].update_todo(
+            args["id"],
+            title=args.get("title"),
+            details=args.get("details"),
+            due_at=args.get("due_at"),
+        )
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+    if todo is None:
+        raise ToolError("That to-do was not found. Use list_todos to check its number.")
+    return ToolResult(True, f"Updated to-do #{todo['id']}: {todo['title']}", data={"todo": todo})
+
+
 TOOLS = [
     Tool(
         "add_todo", "tasks", "Add a to-do",
@@ -80,5 +95,13 @@ TOOLS = [
         "Permanently delete a to-do by number. This always requires approval.",
         obj({"id": {"type": "integer", "minimum": 1}}, ["id"]),
         RISK_SENSITIVE, delete_todo, lambda a: f"Delete to-do #{a.get('id', '?')}",
+    ),
+    Tool(
+        "edit_todo", "tasks", "Edit a to-do",
+        "Change a to-do title, details or ISO due date.",
+        obj({"id": {"type": "integer", "minimum": 1}, "title": {"type": "string", "maxLength": 500},
+             "details": {"type": "string", "maxLength": 2000}, "due_at": {"type": "string", "maxLength": 40}},
+            ["id"]),
+        RISK_ACT, edit_todo, lambda a: f"Edit to-do #{a.get('id', '?')}",
     ),
 ]

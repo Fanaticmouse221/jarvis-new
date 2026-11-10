@@ -24,6 +24,7 @@
   in the To-dos page.
 - Added approval-gated deletion for to-dos and explicit overdue labels in agent
   listings.
+- JARVIS can now revise a to-do's title, details or due date.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach

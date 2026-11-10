@@ -22,6 +22,8 @@ def test_todo_storage_and_status_changes(runtime):
     deleted = runtime.store.delete_todo(second["id"])
     assert deleted["title"] == "Read the docs"
     assert [item["title"] for item in runtime.store.list_todos("all")] == ["Buy milk"]
+    edited = runtime.store.update_todo(first["id"], title="Buy oat milk", details="Ask for the unsweetened one")
+    assert edited["title"] == "Buy oat milk" and edited["details"].startswith("Ask for")
 
 
 def test_todo_tools_use_normal_agent_path(settings):
@@ -43,6 +45,13 @@ def test_todo_tools_use_normal_agent_path(settings):
 def test_delete_todo_is_sensitive(runtime):
     tool = runtime.registry.get("delete_todo")
     assert tool.risk == "sensitive"
+
+
+def test_edit_todo_is_an_action(runtime):
+    assert runtime.registry.get("edit_todo").risk == "act"
+    todo = runtime.store.create_todo("Old title")
+    updated = runtime.store.update_todo(todo["id"], due_at="2026-12-01T10:00:00Z")
+    assert updated["due_at"] == "2026-12-01T10:00:00Z"
 
 
 def test_list_todos_labels_overdue_items(runtime):
