@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
+from jarvis.tools.base import ToolContext
 from tests.conftest import call, run_turn, scripted_runtime, text
 
 
@@ -40,3 +43,10 @@ def test_todo_tools_use_normal_agent_path(settings):
 def test_delete_todo_is_sensitive(runtime):
     tool = runtime.registry.get("delete_todo")
     assert tool.risk == "sensitive"
+
+
+def test_list_todos_labels_overdue_items(runtime):
+    runtime.store.create_todo("Missed deadline", due_at="2020-01-01T00:00:00Z")
+    tool = runtime.registry.get("list_todos")
+    result = asyncio.run(tool.handler({"status": "pending"}, ToolContext(None, "test", runtime.services)))
+    assert "OVERDUE" in result.text

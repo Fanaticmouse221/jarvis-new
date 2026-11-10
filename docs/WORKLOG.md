@@ -6,6 +6,22 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Overdue to-do reporting
+
+**Done:** pending to-dos with a due date in the past are now labelled
+`OVERDUE` in the agent's list output. Completed items are never labelled
+overdue, and undated items remain unchanged.
+
+**Verified:** `uv run pytest -q` passed **186 tests**. The browser regression
+passed **63 checks** with no console errors or warnings. Python syntax checks
+and `git diff --check` passed.
+
+**Unverified:** live-model wording around overdue tasks still needs a real
+Groq check.
+
+**Next:** commit and merge this small reliability improvement, then continue
+with the next task or 3.0 foundation slice.
+
 ## 10 Nov 2026 · GitHub Copilot · Due-date regression coverage
 
 **Done:** extended the API and browser regression to verify due-date

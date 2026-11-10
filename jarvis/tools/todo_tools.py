@@ -1,5 +1,6 @@
 """Agent tools for durable to-dos."""
 
+from datetime import datetime, timezone
 from typing import Any
 
 from jarvis.tools.base import RISK_ACT, RISK_READ, RISK_SENSITIVE, Tool, ToolContext, ToolError, ToolResult, obj
@@ -22,12 +23,19 @@ async def list_todos(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
         raise ToolError(str(exc)) from exc
     if not todos:
         return ToolResult(True, "There are no matching to-dos.", summary="No matching to-dos")
-    lines = [
-        f"#{item['id']} [{item['status']}] {item['title']}"
-        + (f" — due {item['due_at']}" if item.get("due_at") else "")
-        + (f" — {item['details']}" if item["details"] else "")
-        for item in todos
-    ]
+    now = datetime.now(timezone.utc)
+    lines = []
+    for item in todos:
+        overdue = ""
+        if item["status"] == "pending" and item.get("due_at"):
+            due = datetime.fromisoformat(item["due_at"].replace("Z", "+00:00"))
+            if due < now:
+                overdue = " OVERDUE"
+        lines.append(
+            f"#{item['id']} [{item['status']}{overdue}] {item['title']}"
+            + (f" — due {item['due_at']}" if item.get("due_at") else "")
+            + (f" — {item['details']}" if item["details"] else "")
+        )
     return ToolResult(True, "\n".join(lines)[:2800], summary=f"{len(todos)} to-dos")
 
 
