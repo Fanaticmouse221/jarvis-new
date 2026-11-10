@@ -239,6 +239,10 @@ def test_plan_api_creates_and_lists_steps(client):
     assert changed.status_code == 200 and changed.json()["steps"][0]["status"] == "completed"
     detail = client.get(f"/api/plans/{created.json()['id']}")
     assert detail.status_code == 200 and detail.json()["next_step"]["position"] == 2
+    cancelled = client.patch(f"/api/plans/{created.json()['id']}", json={"status": "cancelled"})
+    assert cancelled.status_code == 200 and cancelled.json()["status"] == "cancelled"
+    reopened = client.patch(f"/api/plans/{created.json()['id']}", json={"status": "active"})
+    assert reopened.status_code == 200 and reopened.json()["status"] == "active"
     assert client.patch(f"/api/plans/{created.json()['id']}/steps/9", json={"status": "completed"}).status_code == 404
 
 

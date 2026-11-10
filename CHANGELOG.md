@@ -34,6 +34,7 @@
 - The To-dos page now shows durable plans, creates plans from one-step-per-line
   input, and lets Jack complete or reopen persisted steps.
 - JARVIS can inspect a plan and report its next pending step after a restart.
+- Plans can be cancelled and reopened without losing their step history.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach

@@ -744,6 +744,22 @@ class Store:
         result["next_step"] = next((dict(step) for step in steps if step["status"] == "pending"), None)
         return result
 
+    def update_plan_status(self, plan_id: int, status: str) -> dict[str, Any] | None:
+        if status not in ("active", "cancelled"):
+            raise ValueError("Plan status must be active or cancelled.")
+        now = utc_now()
+        with self._connect() as conn:
+            current = conn.execute("SELECT status FROM plans WHERE id = ?", (plan_id,)).fetchone()
+            if current is None:
+                return None
+            if current["status"] == "completed":
+                raise ValueError("Completed plans cannot be cancelled or reopened.")
+            conn.execute(
+                "UPDATE plans SET status = ?, updated_at = ? WHERE id = ?",
+                (status, now, plan_id),
+            )
+        return self.get_plan(plan_id)
+
     def update_plan_step(
         self, plan_id: int, position: int, status: str
     ) -> dict[str, Any] | None:

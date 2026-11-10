@@ -26,6 +26,10 @@ def test_plan_storage_survives_listing(runtime):
     assert completed["status"] == "completed"
     reopened = runtime.store.update_plan_step(plan["id"], 1, "pending")
     assert reopened["status"] == "active"
+    cancelled = runtime.store.update_plan_status(plan["id"], "cancelled")
+    assert cancelled["status"] == "cancelled"
+    reopened = runtime.store.update_plan_status(plan["id"], "active")
+    assert reopened["status"] == "active"
 
 
 def test_plan_storage_validates_steps(runtime):
@@ -71,3 +75,8 @@ def test_fake_model_understands_plan_phrasing():
         [{"function": {"name": "resume_plan"}}],
     )
     assert calls[0].name == "resume_plan"
+    reply, calls = scripted_reply(
+        [ChatMessage("user", "cancel plan 1")],
+        [{"function": {"name": "change_plan_status"}}],
+    )
+    assert calls[0].name == "change_plan_status"

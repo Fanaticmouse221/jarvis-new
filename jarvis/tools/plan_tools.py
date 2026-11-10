@@ -49,6 +49,17 @@ async def resume_plan(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     )
 
 
+async def change_plan_status(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    try:
+        plan = ctx.services["store"].update_plan_status(args["plan_id"], args["status"])
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+    if plan is None:
+        raise ToolError("That plan was not found. Use list_plans to check its number.")
+    verb = "Cancelled" if args["status"] == "cancelled" else "Reopened"
+    return ToolResult(True, f"{verb} plan #{plan['id']}: {plan['title']}", data={"plan": plan})
+
+
 async def change_plan_step(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     plan = ctx.services["store"].update_plan_step(args["plan_id"], args["step"], args["status"])
     if plan is None:
@@ -114,5 +125,21 @@ TOOLS = [
         RISK_READ,
         resume_plan,
         lambda a: f"Resume plan #{a.get('plan_id', '?')}",
+    ),
+    Tool(
+        "change_plan_status",
+        "tasks",
+        "Cancel or reopen a plan",
+        "Cancel an active plan or reopen a cancelled plan without losing its steps.",
+        obj(
+            {
+                "plan_id": {"type": "integer", "minimum": 1},
+                "status": {"type": "string", "enum": ["cancelled", "active"]},
+            },
+            ["plan_id", "status"],
+        ),
+        RISK_ACT,
+        change_plan_status,
+        lambda a: f"{'Cancel' if a.get('status') == 'cancelled' else 'Reopen'} plan #{a.get('plan_id', '?')}",
     ),
 ]

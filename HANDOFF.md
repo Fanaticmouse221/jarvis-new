@@ -88,7 +88,7 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
 | On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #17](https://github.com/Fanaticmouse221/jarvis/pull/17). 3.0 durable plans, step state, visible controls and resume lookup are implemented locally after merged PR #20. |
-| Tests | `uv run pytest -q`: **193 passed**. The browser regression is **65 checks passed** after adding visible plan creation and step completion coverage. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
+| Tests | `uv run pytest -q`: **193 passed**. The browser regression is **67 checks passed**, including plan cancellation and reopening. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 and later (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
