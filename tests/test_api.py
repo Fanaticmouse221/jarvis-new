@@ -209,6 +209,21 @@ def test_todo_api_persists_and_changes_status(client):
     assert client.get("/api/todos?status=pending").json() == []
 
 
+def test_todo_api_edits_fields(client):
+    created = client.post("/api/todos", json={"title": "Buy milk", "details": "Corner shop"}).json()
+    todo_id = created["id"]
+    edited = client.patch(
+        f"/api/todos/{todo_id}",
+        json={"title": "Buy oat milk", "details": "Unsweetened", "due_at": "2026-11-11T08:30:00+10:00"},
+    )
+    assert edited.status_code == 200
+    assert edited.json()["title"] == "Buy oat milk"
+    assert edited.json()["details"] == "Unsweetened"
+    assert edited.json()["due_at"] == "2026-11-10T22:30:00Z"
+    assert client.patch(f"/api/todos/{todo_id}", json={}).status_code == 422
+    assert client.patch(f"/api/todos/{todo_id}", json={"title": ""}).status_code == 422
+
+
 def test_adding_a_key_verifies_it_saves_it_and_selects_models(tmp_path, monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     runtime = Runtime(make_settings(tmp_path, "groq:openai/gpt-oss-120b,groq:llama-3.1-8b-instant"), launcher=FakeLauncher())

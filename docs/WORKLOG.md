@@ -6,6 +6,21 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · To-do API edit parity
+
+**Done:** extended `PATCH /api/todos/{id}` so direct API clients can change a
+to-do's title, details or due date as well as its status. Invalid edits are
+validated before any status change is applied.
+
+**Verified:** the focused API and to-do tests passed **19 tests**. The full
+suite and browser regression remain to be rerun before the next commit.
+
+**Unverified:** the browser still has no direct edit controls; live-model
+phrasing and Windows-only behaviour remain unverified.
+
+**Next:** run the full suite and browser regression, then begin the smallest
+durable multi-step-plan foundation.
+
 ## 10 Nov 2026 · GitHub Copilot · Editable to-dos
 
 **Done:** added durable `edit_todo` support for changing a to-do's title,

@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, and automatic update-before-start are merged through [PR #14](https://github.com/Fanaticmouse221/jarvis/pull/14). |
-| Tests | `uv run pytest -q`: **187 passed**. Browser regression: **63 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #16](https://github.com/Fanaticmouse221/jarvis/pull/16). |
+| Tests | `uv run pytest -q`: **188 passed**. The focused to-do/API tests pass (**19 passed**); the browser regression remains **63 checks passed**. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 and later (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -99,12 +99,12 @@ local API protection.
 
 ## What Jack has asked for (10 Nov 2026, in priority order)
 
-1. **This handoff system**, so work can continue in another AI when one runs out of usage. *(done in this commit)*
-2. **Message JARVIS from his phone.** He chose a **Telegram bot** over Tailscale or Wi-Fi-only.
+1. **This handoff system**, so work can continue in another AI when one runs out of usage. *(done)*
+2. **Message JARVIS from his phone.** Telegram is built, but Jack asked that Telegram voice notes no longer be pursued.
 3. **"It needs to be able to do more things."** More tools/abilities.
-4. **Keep developing overall**: carry on down the roadmap (voice next).
+4. **Keep developing overall**: continue with the smallest durable multi-step-plan foundation.
 
-## What to do next: version 2.2 "Voice"
+## What to do next: version 3.0 "Durable plans"
 
 Build in this order. Commit and push after each numbered item with tests passing,
 ticking the box here. Design notes are decisions already made; follow them unless
