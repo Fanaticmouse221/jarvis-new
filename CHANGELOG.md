@@ -29,6 +29,8 @@
   edits as the agent tool.
 - Added the first durable-plan foundation: ordered plan steps survive restarts
   and are available through protected API and agent create/list tools.
+- Plan steps can now be completed or reopened, with the parent plan becoming
+  completed only when every step is complete.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach

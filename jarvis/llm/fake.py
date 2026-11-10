@@ -188,6 +188,12 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
         return use("create_plan", title=match.group(1).strip(), steps=steps)
     if lower in ("list plans", "show plans", "my plans"):
         return use("list_plans")
+    match = re.fullmatch(r"(?:complete|finish) plan #?(\d+) step #?(\d+)", lower)
+    if match:
+        return use("change_plan_step", plan_id=int(match.group(1)), step=int(match.group(2)), status="completed")
+    match = re.fullmatch(r"reopen plan #?(\d+) step #?(\d+)", lower)
+    if match:
+        return use("change_plan_step", plan_id=int(match.group(1)), step=int(match.group(2)), status="pending")
     match = re.fullmatch(r"(?:please )?(?:close|quit|exit) (.+?)[.!]?$", text, re.I)
     if match:
         return use("close_app", name=match.group(1).strip())

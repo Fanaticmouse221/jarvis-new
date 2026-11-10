@@ -235,6 +235,9 @@ def test_plan_api_creates_and_lists_steps(client):
     assert listed[0]["title"] == "Revise chemistry"
     assert client.get("/api/plans?status=completed").json() == []
     assert client.post("/api/plans", json={"title": "Empty", "steps": []}).status_code == 422
+    changed = client.patch(f"/api/plans/{created.json()['id']}/steps/1", json={"status": "completed"})
+    assert changed.status_code == 200 and changed.json()["steps"][0]["status"] == "completed"
+    assert client.patch(f"/api/plans/{created.json()['id']}/steps/9", json={"status": "completed"}).status_code == 404
 
 
 def test_adding_a_key_verifies_it_saves_it_and_selects_models(tmp_path, monkeypatch):
