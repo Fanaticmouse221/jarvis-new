@@ -6,7 +6,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - **Built, needs a real-world check**: tested against a stand-in, but not yet on Jack's PC or against the live service.
 - **Planned** / **Not started**.
 
-## Where things stand (v2.1.0, 10 November 2026)
+## Where things stand (v2.3.0 in development, 10 November 2026)
 
 | Capability | Status | Evidence, or what is missing |
 |---|---|---|
@@ -38,7 +38,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
-| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos with optional due dates, approval-aware close/move/delete tools and safer process matching are covered by 184 automated tests and a 62-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
+| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos with optional due dates and approval-gated deletion, approval-aware close/move/delete tools and safer process matching are covered by 186 automated tests and a 63-check browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 
@@ -96,9 +96,10 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [ ] Wake phrase investigated after the basics are solid
 
 ### 2.3 Tasks
-- [x] Durable to-dos with add, list, complete and reopen tools
-- [x] To-dos page with direct add and completion controls
+- [x] Durable to-dos with add, list, complete, reopen, due dates and approval-gated deletion
+- [x] To-dos page with direct add, completion controls and due-date display
 - [x] Closing apps; moving/deleting files with approval
+- [x] Safer application process matching and automatic update before startup
 
 ### 3.0 and beyond
 - [ ] Multi-step work with visible plans that survives restarts
@@ -106,7 +107,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [ ] Login, encrypted remote access, installable app on iPhone and iPad, sync
 - [ ] Calendar and email through official APIs, with approval before sending
 
-## Known limitations in 2.1
+## Known limitations in 2.3
 - The demo brain (`fake:agent`) is a script, not an AI. It understands a few phrasings only.
 - Stopping or reloading the page mid-task cancels that task.
 - The console window stays open while JARVIS runs.
