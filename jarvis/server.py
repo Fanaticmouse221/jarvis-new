@@ -418,9 +418,22 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
     async def update_todo(todo_id: int, request: Request) -> dict[str, Any]:
         body = await request.json()
         status = body.get("status")
-        if status not in ("pending", "completed"):
+        editable = {key: body[key] for key in ("title", "details", "due_at") if key in body}
+        if status is None and not editable:
+            raise HTTPException(422, "Provide a status, title, details or due date to change.")
+        if status is not None and status not in ("pending", "completed"):
             raise HTTPException(422, "Status must be pending or completed.")
-        todo = rt.store.update_todo_status(todo_id, status)
+        if editable:
+            try:
+                todo = rt.store.update_todo(todo_id, **editable)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+        else:
+            todo = None
+        if todo is None and editable:
+            raise HTTPException(404, "To-do not found.")
+        if status is not None:
+            todo = rt.store.update_todo_status(todo_id, status)
         if todo is None:
             raise HTTPException(404, "To-do not found.")
         return todo
