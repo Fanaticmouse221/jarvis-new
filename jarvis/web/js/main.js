@@ -4,6 +4,7 @@ import { api } from "./api.js";
 import { bootChanged, initChat, loadConversations, newConversation, openConversation } from "./chat.js";
 import { renderActivity, renderMemory } from "./pages.js";
 import { renderSettings } from "./settings.js";
+import { renderTodos } from "./todos.js";
 import { startReminderNotices } from "./reminders.js";
 import { h } from "./util.js";
 
@@ -11,7 +12,7 @@ const app = document.getElementById("app");
 const viewChat = document.getElementById("viewChat");
 const viewPage = document.getElementById("viewPage");
 const railStatus = document.getElementById("railStatus");
-const PAGES = { memory: renderMemory, activity: renderActivity, settings: renderSettings };
+const PAGES = { memory: renderMemory, activity: renderActivity, settings: renderSettings, todos: renderTodos };
 
 const ctx = {
   boot: null,

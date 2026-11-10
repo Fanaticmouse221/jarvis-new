@@ -129,6 +129,7 @@ def missing_capabilities(tool_names: list[str]) -> str:
         ("set_reminder", "set reminders"),
         ("open_app", "open applications"),
         ("remember", "save new memories"),
+        ("add_todo", "manage to-dos"),
     ):
         if tool not in enabled:
             missing.append(ability)

@@ -129,6 +129,7 @@ for free.
 | `memories` | kind, content, pinned, source, usage |
 | `settings` | preferences changed in the app |
 | `tool_runs` | the action log |
+| `todos` | durable pending and completed to-dos |
 | `usage` | requests and tokens per model per day |
 
 Schema changes are numbered migrations (`PRAGMA user_version`); a v0.1 database

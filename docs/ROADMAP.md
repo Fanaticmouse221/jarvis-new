@@ -38,7 +38,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
-| To-dos and more file actions | Not started | Milestone 2.3 |
+| To-dos and more file actions | Built, needs a real-world check | Durable to-dos, agent tools and the To-dos page are covered by unit/API tests and the browser regression; real use with a live model remains unverified |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 
@@ -96,7 +96,9 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [ ] Wake phrase investigated after the basics are solid
 
 ### 2.3 Tasks
-- [ ] To-dos; closing apps; moving and deleting files with approval
+- [x] Durable to-dos with add, list, complete and reopen tools
+- [x] To-dos page with direct add and completion controls
+- [ ] Closing apps; moving/deleting files with approval
 
 ### 3.0 and beyond
 - [ ] Multi-step work with visible plans that survives restarts

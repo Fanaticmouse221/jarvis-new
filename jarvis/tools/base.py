@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
 RISK_READ, RISK_ACT, RISK_SENSITIVE = "read", "act", "sensitive"
-GROUPS = {"memory": "Memory", "computer": "This computer", "web": "Web", "files": "Approved files", "utilities": "Utilities", "reminders": "Reminders"}
+GROUPS = {"memory": "Memory", "computer": "This computer", "web": "Web", "files": "Approved files", "utilities": "Utilities", "reminders": "Reminders", "tasks": "Tasks"}
 
 
 class ToolError(Exception):

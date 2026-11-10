@@ -4,7 +4,7 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 12:30 PM (Brisbane) by GitHub Copilot.
+**Last updated:** 10 November 2026, 12:45 PM (Brisbane) by GitHub Copilot.
 
 ## How to hand this to another AI (Jack's steps)
 
@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice slice implemented: browser microphone capture, Groq Whisper transcription route and automatic spoken replies. |
-| Tests | `uv run pytest -q`: **178 passed**. Browser regression: **57 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission and speech quality remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable to-dos are now implemented on this branch. |
+| Tests | `uv run pytest -q`: **181 passed**. Browser regression: **58 checks passed**, screenshots inspected. Live Groq Whisper, microphone permission, speech quality and live-model task phrasing remain unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -224,16 +224,22 @@ brain and the browser run can exercise them.
 - Sustained silence stops recording after 2.5 seconds, with a two-minute hard
   limit and cleanup of microphone tracks and audio analysis.
 
-### What to do next: finish version 2.2 "Voice"
+### [x] 8. Version 2.3 to-dos foundation
+- Migration v4 adds durable `todos` with pending/completed status.
+- The agent has `add_todo`, `list_todos` and `change_todo` tools using normal
+  permissions, logging and conversation links.
+- The app has a protected `/api/todos` surface and a To-dos page for adding,
+  completing and reopening items.
 
-1. Add Telegram voice-note support through the same bounded transcription
-   service, keeping the existing Telegram owner, approval and conversation path.
-2. Add focused automated coverage for Telegram audio handling and any browser
-   voice state that can be tested without real microphone hardware.
-3. Run a real-world Windows check with a live Groq key and microphone; inspect
-   transcription accuracy, speech quality, silence threshold and interruption.
-4. Update this handoff, `docs/WORKLOG.md`, `docs/ROADMAP.md` and `CHANGELOG.md`
-   with that evidence, then create the dedicated 2.2 pull request.
+### What to do next: continue version 2.3 "Tasks"
+
+1. Add the remaining 2.3 computer actions: close applications, then move/delete
+   files with explicit approval and the existing outside-content safeguards.
+2. Add focused browser coverage for the To-dos page and task actions.
+3. On Jack's PC, run a live-model check of natural task phrasing and verify
+   voice separately when convenient; live Groq and microphone paths remain
+   unverified here.
+4. Update this handoff and worklog, then open the next pull request.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
   interrupt. Then transcribe Telegram voice notes the same way.
