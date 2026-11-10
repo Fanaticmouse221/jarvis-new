@@ -22,7 +22,7 @@ conversation and 390px mobile views. `git diff --check` passed.
 Telegram bot, or verify Windows toast delivery and document associations. The
 browser run uses stand-ins for those services.
 
-**Next:** open/merge the 2.1 release pull request, then begin the 2.2 voice
+**Next:** merge [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5), then begin the 2.2 voice
 milestone. On Jack's PC, run `update.bat`, then try a real Groq reply, Telegram
 pairing and a reminder.
 

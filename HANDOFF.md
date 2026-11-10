@@ -84,7 +84,7 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 
 | | |
 |---|---|
-| Released | **v2.1.0** release pass complete on this branch; PR still needs to be opened/merged |
+| Released | **v2.1.0** release pass complete on this branch; [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) is open and awaits merge |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
 | On that branch so far | Items 1–5 complete: Reach implementation, Settings/browser coverage, release metadata and handoff documentation. |
