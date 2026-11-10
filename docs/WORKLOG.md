@@ -6,6 +6,21 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Plan step state
+
+**Done:** added durable step completion and reopening through storage, the
+`change_plan_step` agent tool, and a protected API route. Parent plan status is
+derived from persisted steps, so incomplete plans remain active after restart.
+
+**Verified:** focused plan/API tests passed **19 tests**, Python syntax checks
+and `git diff --check` passed.
+
+**Unverified:** automatic execution/resume of model work and interface plan
+controls are not implemented yet.
+
+**Next:** run the full suite and browser regression, then add a small plans
+view or extend the existing tasks page with persisted plan state.
+
 ## 10 Nov 2026 · GitHub Copilot · Durable plan foundation
 
 **Done:** added schema migration v6 with durable `plans` and `plan_steps`

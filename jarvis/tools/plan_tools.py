@@ -35,6 +35,18 @@ async def list_plans(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
     return ToolResult(True, "\n".join(lines)[:2800], summary=f"{len(plans)} plans")
 
 
+async def change_plan_step(args: dict[str, Any], ctx: ToolContext) -> ToolResult:
+    plan = ctx.services["store"].update_plan_step(args["plan_id"], args["step"], args["status"])
+    if plan is None:
+        raise ToolError("That plan step was not found. Use list_plans to check the plan and step number.")
+    verb = "Completed" if args["status"] == "completed" else "Reopened"
+    return ToolResult(
+        True,
+        f"{verb} step {args['step']} of plan #{plan['id']}: {plan['title']}",
+        data={"plan": plan},
+    )
+
+
 TOOLS = [
     Tool(
         "create_plan",
@@ -61,5 +73,22 @@ TOOLS = [
         RISK_READ,
         list_plans,
         lambda a: f"List {a.get('status', 'active')} plans",
+    ),
+    Tool(
+        "change_plan_step",
+        "tasks",
+        "Change a plan step",
+        "Complete or reopen one step in a durable plan.",
+        obj(
+            {
+                "plan_id": {"type": "integer", "minimum": 1},
+                "step": {"type": "integer", "minimum": 1},
+                "status": {"type": "string", "enum": ["completed", "pending"]},
+            },
+            ["plan_id", "step", "status"],
+        ),
+        RISK_ACT,
+        change_plan_step,
+        lambda a: f"{'Complete' if a.get('status') == 'completed' else 'Reopen'} plan #{a.get('plan_id', '?')} step {a.get('step', '?')}",
     ),
 ]

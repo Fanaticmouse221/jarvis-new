@@ -433,6 +433,20 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 
+    @api.patch("/plans/{plan_id}/steps/{position}")
+    async def update_plan_step(plan_id: int, position: int, request: Request) -> dict[str, Any]:
+        body = await request.json()
+        status = body.get("status")
+        if status not in ("pending", "completed"):
+            raise HTTPException(422, "Status must be pending or completed.")
+        try:
+            plan = rt.store.update_plan_step(plan_id, position, status)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if plan is None:
+            raise HTTPException(404, "Plan step not found.")
+        return plan
+
     @api.patch("/todos/{todo_id}")
     async def update_todo(todo_id: int, request: Request) -> dict[str, Any]:
         body = await request.json()

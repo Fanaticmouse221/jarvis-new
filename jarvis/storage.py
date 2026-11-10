@@ -731,6 +731,42 @@ class Store:
             result.append(item)
         return result
 
+    def update_plan_step(
+        self, plan_id: int, position: int, status: str
+    ) -> dict[str, Any] | None:
+        if status not in ("pending", "completed"):
+            raise ValueError("Unknown plan step status.")
+        if position < 1:
+            raise ValueError("Plan step numbers start at 1.")
+        now = utc_now()
+        with self._connect() as conn:
+            step = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? AND position = ?",
+                (plan_id, position),
+            ).fetchone()
+            if step is None:
+                return None
+            conn.execute(
+                "UPDATE plan_steps SET status = ?, completed_at = ? WHERE id = ?",
+                (status, now if status == "completed" else None, step["id"]),
+            )
+            plan_status = conn.execute(
+                "SELECT CASE WHEN COUNT(*) = SUM(status = 'completed') "
+                "THEN 'completed' ELSE 'active' END FROM plan_steps WHERE plan_id = ?",
+                (plan_id,),
+            ).fetchone()[0]
+            conn.execute(
+                "UPDATE plans SET status = ?, updated_at = ? WHERE id = ?",
+                (plan_status, now, plan_id),
+            )
+            plan = conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+            steps = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? ORDER BY position", (plan_id,)
+            ).fetchall()
+        result = dict(plan)
+        result["steps"] = [dict(item) for item in steps]
+        return result
+
     # ----- usage ---------------------------------------------------------
 
     def record_usage(
