@@ -6,6 +6,28 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · 2.3 approved computer and file actions
+
+**Done:** completed the remaining planned 2.3 action slice. Added sensitive
+`close_app`, `move_file` and `delete_file` tools. Closing uses the selected
+application's distinctive process tokens, terminates matching processes and
+reports when nothing is running. File moves and deletes are restricted to
+approved roots, re-check paths immediately before mutation, refuse move
+overwrites and only delete regular files. Added fake-model phrases and focused
+tests for execution, bounds and approval injection.
+
+**Verified:** `uv run pytest -q` passed **183 tests**. The browser regression
+passed **58 checks** with no console errors or warnings. Python syntax checks,
+Node syntax checks and `git diff --check` passed.
+
+**Unverified:** real Windows application process matching, unsaved-work
+behaviour, Windows file associations, live Groq interpretation and live voice
+paths still need Jack's PC. The browser run uses injected launchers and test
+folders for destructive actions.
+
+**Next:** commit and merge this slice, then continue with the next small 2.3
+ability or a real-world check of the new actions.
+
 ## 10 Nov 2026 · GitHub Copilot · 2.3 to-dos foundation
 
 **Done:** moved on from Telegram voice notes as requested and added the first

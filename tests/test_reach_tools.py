@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 from jarvis.tools.base import ToolContext, ToolError
-from jarvis.tools import file_tools as files, utility_tools as utilities, web_tools as web
+from jarvis.tools import file_tools as files, system_tools as systems, utility_tools as utilities, web_tools as web
 
 
 @pytest.fixture
@@ -68,6 +68,33 @@ def test_file_creation_append_and_overwrite(ctx):
     assert files.write_risk({"mode": "create"}, ctx) == "act"
     asyncio.run(files.write_file({"path": "note.txt", "content": "replacement", "mode": "overwrite"}, ctx))
     assert (workspace / "note.txt").read_text() == "replacement"
+
+
+def test_move_and_delete_files_are_bounded_to_approved_roots(ctx, tmp_path):
+    workspace = ctx.services["settings"].workspace
+    destination = workspace / "archive"
+    destination.mkdir()
+    source = workspace / "move-me.txt"
+    source.write_text("hello", encoding="utf-8")
+    moved = asyncio.run(files.move_file({"source": "move-me.txt", "destination": str(destination / "moved.txt")}, ctx))
+    assert moved.ok and not source.exists() and (destination / "moved.txt").read_text() == "hello"
+    deleted = asyncio.run(files.delete_file({"path": str(destination / "moved.txt")}, ctx))
+    assert deleted.ok and not (destination / "moved.txt").exists()
+    outside = tmp_path / "outside.txt"
+    outside.write_text("private", encoding="utf-8")
+    with pytest.raises(ToolError):
+        asyncio.run(files.delete_file({"path": str(outside)}, ctx))
+    with pytest.raises(ToolError):
+        asyncio.run(files.move_file({"source": "missing.txt", "destination": str(destination / "x.txt")}, ctx))
+
+
+def test_close_app_uses_injected_launcher(ctx):
+    launcher = ctx.services["launcher"] = type("Launcher", (), {
+        "find": lambda self, name: ({"name": "Notepad", "id": "notepad"}, []),
+        "close": lambda self, app: ["notepad.exe"],
+    })()
+    result = asyncio.run(systems.close_app({"name": "Notepad"}, ctx))
+    assert result.ok and "Closed Notepad" in result.text
 
 
 def test_file_reads_are_paginated_and_untrusted(ctx):

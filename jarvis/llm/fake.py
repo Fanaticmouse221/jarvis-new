@@ -176,6 +176,15 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.fullmatch(r"reopen to-?do #?(\d+)", lower)
     if match:
         return use("change_todo", id=int(match.group(1)), status="pending")
+    match = re.fullmatch(r"(?:please )?(?:close|quit|exit) (.+?)[.!]?$", text, re.I)
+    if match:
+        return use("close_app", name=match.group(1).strip())
+    match = re.match(r"move file (.+?) to (.+)", text, re.I)
+    if match:
+        return use("move_file", source=match.group(1).strip(), destination=match.group(2).strip())
+    match = re.match(r"(?:delete|remove) file (.+)", text, re.I)
+    if match:
+        return use("delete_file", path=match.group(1).strip())
     match = re.match(r"open (https?://\S+)", text, re.IGNORECASE)
     if match:
         return use("open_url", url=match.group(1))

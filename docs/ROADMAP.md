@@ -23,7 +23,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Tool calling with real execution | Tested and working | A launched program wrote a marker file, checked independently |
 | Approvals (allow, decline, always allow, stop) | Tested and working | Tests; browser run confirms nothing runs before approval |
 | Action log | Tested and working | Browser run |
-| **Opening apps on Windows** | **Built, needs a real-world check** | Uses the Start menu app list; only the non-Windows fallback could be run here |
+| **Opening and closing apps on Windows** | **Built, needs a real-world check** | Uses the Start menu app list and bounded process matching; only injected/fallback behaviour could be run here |
 | Opening web pages, system status | Tested and working | Tests (system status reads real values) |
 | Rate-limit handling and fallback | Tested and working | Tests; browser run with a simulated 429 |
 | Usage and remaining allowance | Tested and working | Shown in Settings from stored usage and provider headers |
@@ -38,7 +38,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
 | Browser voice messages | Built, needs a real-world check | Unit/API tests and browser regression cover the microphone control and status feedback; live Groq Whisper, microphone permission and speech quality remain unverified |
-| To-dos and more file actions | Built, needs a real-world check | Durable to-dos, agent tools and the To-dos page are covered by unit/API tests and the browser regression; real use with a live model remains unverified |
+| To-dos, closing apps and approved file actions | Built, needs a real-world check | Durable to-dos, approval-aware close/move/delete tools and the To-dos page are covered by 183 automated tests and the browser regression; real Windows process/file behaviour and live-model phrasing remain unverified |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 
@@ -98,7 +98,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 ### 2.3 Tasks
 - [x] Durable to-dos with add, list, complete and reopen tools
 - [x] To-dos page with direct add and completion controls
-- [ ] Closing apps; moving/deleting files with approval
+- [x] Closing apps; moving/deleting files with approval
 
 ### 3.0 and beyond
 - [ ] Multi-step work with visible plans that survives restarts

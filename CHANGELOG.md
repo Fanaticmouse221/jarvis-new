@@ -17,6 +17,9 @@
 - Added durable SQLite-backed to-dos with add, list, complete and reopen actions.
 - Added a To-dos page alongside Chat, Memory, Activity and Settings.
 - JARVIS can manage the same to-dos through the normal permission-aware agent path.
+- Added approval-aware `close_app`, `move_file` and `delete_file` actions.
+- Close-app matching reports real process results; file mutations stay within
+  approved folders, refuse move overwrites and never recursively delete folders.
 
 ## 2.1.0 (2026-11-10): Reach
 
