@@ -6,7 +6,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - **Built, needs a real-world check**: tested against a stand-in, but not yet on Jack's PC or against the live service.
 - **Planned** / **Not started**.
 
-## Where things stand (v2.0.0, 10 November 2026)
+## Where things stand (v2.1.0, 10 November 2026)
 
 | Capability | Status | Evidence, or what is missing |
 |---|---|---|
@@ -30,12 +30,15 @@ Status words used here, and nowhere more generously than the evidence allows:
 | First-run key entry | Tested and working | Browser run: rejected key refused, accepted key saved, models chosen |
 | API protected from other web pages | Tested and working | Tests for missing token, foreign origin, foreign host |
 | Maths, code and tables | Tested and working | Browser run |
-| Phone-sized layout | Tested and working | Browser run (layout only; no remote access yet) |
+| Phone-sized layout | Tested and working | Browser run, including a 390px viewport |
+| Telegram phone chat | Built, needs a real-world check | Unit tests and browser run against a Telegram API stand-in; live bot and phone pairing remain unverified |
+| Web search and public-page reading | Built, needs a real-world check | Unit tests and browser run against stand-ins; upstream search throttling and live sites remain unverified |
+| Weather and safe calculator | Built, needs a real-world check | Unit tests; live Open-Meteo access is not available in the build environment |
+| Approved-folder file tools | Built, needs a real-world check | Unit tests and browser run against test folders; Windows document associations remain unverified |
+| Reminders and delivery | Built, needs a real-world check | Unit tests and browser run with app/Telegram stand-ins; Windows toast delivery remains unverified |
 | **Own window, desktop shortcut, setup on Windows** | **Built, needs a real-world check** | Windows-only code paths |
-| Voice | Not started | Milestone 2.1 |
-| Web research | Not started | Milestone 2.2 |
-| File tools | Not started | Milestone 2.2 |
-| Reminders and tasks | Not started | Milestone 2.3 |
+| Voice | Not started | Milestone 2.2 |
+| To-dos and more file actions | Not started | Milestone 2.3 |
 | Multi-step work that survives restarts | Not started | 3.0 |
 | iPhone / iPad access, sync | Not started | 3.x |
 
@@ -50,7 +53,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 | Common failures give useful messages, not crashes | Met: bad key, no key, rate limit, oversize request, tool failure, model failure mid-task |
 | Messages produce legitimate model responses | **Open** until the first live run |
 | JARVIS sounds like JARVIS | **Open** until judged with a real model |
-| Voice, research | Not attempted in 2.0 |
+| Voice | Not attempted in 2.1 |
 
 ## Done
 
@@ -73,14 +76,15 @@ Status words used here, and nowhere more generously than the evidence allows:
 > The order changed on 10 November 2026 at Jack's request: phone access and more
 > abilities come first. The detailed, current plan is in [`HANDOFF.md`](../HANDOFF.md).
 
-### 2.1 Reach: phone, web, files, reminders (in progress on branch `codex/jarvis-2.1-reach`)
-- [x] Shared plumbing: schema v3, channels, dynamic risks and lifecycle (76 unit tests; 39 browser checks on Windows)
-- [ ] Message JARVIS from a phone through a private Telegram bot, with approval buttons
-- [ ] Web search and page reading with sources
-- [ ] Weather, calculator
-- [ ] Files: find, read (text, Word, PowerPoint, PDF), create in folders Jack approves; overwriting always asks
-- [ ] Reminders, delivered in the app, on the phone and as a Windows notification
-- [ ] Media, volume and screen lock on the PC
+### 2.1 Reach (released 10 November 2026)
+- [x] Shared plumbing: schema v3, channels, dynamic risks and lifecycle
+- [x] Message JARVIS from a phone through a private Telegram bot, with approval buttons
+- [x] Web search and page reading with bounded, untrusted results
+- [x] Weather and safe calculator
+- [x] Files: find, read (text, Word, PowerPoint, PDF), create in folders Jack approves; overwriting always asks
+- [x] Reminders, delivered in the app, on the phone and as a best-effort Windows notification
+- [x] Media, volume and screen lock on the PC
+- [x] Settings and browser regression coverage for the Reach interface
 
 ### 2.2 Voice
 - [ ] Microphone button and hands-free mode with silence detection
@@ -99,7 +103,7 @@ Status words used here, and nowhere more generously than the evidence allows:
 - [ ] Login, encrypted remote access, installable app on iPhone and iPad, sync
 - [ ] Calendar and email through official APIs, with approval before sending
 
-## Known limitations in 2.0
+## Known limitations in 2.1
 - The demo brain (`fake:agent`) is a script, not an AI. It understands a few phrasings only.
 - Stopping or reloading the page mid-task cancels that task.
 - The console window stays open while JARVIS runs.

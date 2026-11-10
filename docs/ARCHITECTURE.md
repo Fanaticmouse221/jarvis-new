@@ -1,4 +1,4 @@
-# Architecture (v2.0)
+# Architecture (v2.1)
 
 JARVIS is one Python process. A FastAPI server serves the interface, keeps
 everything in a single SQLite file and talks to language models through a
@@ -138,7 +138,6 @@ upgrades in place.
 
 | Milestone | Adds | Touches |
 |---|---|---|
-| 2.1 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
-| 2.2 Reach | web search, page reading, files in approved folders | new files in `tools/`; the outside-content rule already exists |
-| 2.3 Tasks | reminders and to-dos | one table, three tools, a scheduler loop |
+| 2.2 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
+| 2.3 Tasks | to-dos and more file actions | task state, approval-aware tools |
 | 3.0 | longer multi-step work that survives restarts | task state in `agent.py` |

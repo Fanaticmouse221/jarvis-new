@@ -4,7 +4,7 @@ This file lets any AI assistant (Claude, ChatGPT/Codex, Gemini, Cursor…) or pe
 pick up JARVIS exactly where the last session stopped. It is kept current: whoever
 works on the project updates it, and `docs/WORKLOG.md`, before every commit.
 
-**Last updated:** 10 November 2026, 11:00 AM (Brisbane) by ChatGPT/Codex.
+**Last updated:** 10 November 2026, 12:05 PM (Brisbane) by GitHub Copilot.
 
 ## How to hand this to another AI (Jack's steps)
 
@@ -84,11 +84,11 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 
 | | |
 |---|---|
-| Released | **v2.0.0** on `main` (PR #1 merged 10 Nov 2026) |
+| Released | **v2.1.0** release pass complete on this branch; PR still needs to be opened/merged |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
-| Working branch | **`codex/jarvis-2.1-reach`**, from current `main` after the handoff branch was merged. |
-| On that branch so far | Items 1–4 implemented, including persistent reminders, scheduler, phone delivery, app banners and a Settings reminders list. Release docs are next. PR #4. |
-| Tests | Before Jack asked to stop testing: 175 tests passed in the working tree; a 51-check browser run completed (latest phone screenshots uninspected). Later fixes and integration changes are unverified. |
+| Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
+| On that branch so far | Items 1–5 complete: Reach implementation, Settings/browser coverage, release metadata and handoff documentation. |
+| Tests | `uv run pytest -q`: **176 passed**. Browser regression: **55 checks passed**, screenshots inspected. Live Groq, Telegram and Windows toast checks remain unverified. |
 
 What exists in 2.0 (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -104,7 +104,7 @@ local API protection.
 3. **"It needs to be able to do more things."** More tools/abilities.
 4. **Keep developing overall**: carry on down the roadmap (voice next).
 
-## What to do next: version 2.1 "Reach"
+## What to do next: version 2.2 "Voice"
 
 Build in this order. Commit and push after each numbered item with tests passing,
 ticking the box here. Design notes are decisions already made; follow them unless
@@ -201,7 +201,7 @@ brain and the browser run can exercise them.
 - `set_reminder` takes `text` plus `at` (local ISO date-time; the system prompt
   already gives the current local time) or `in_minutes`, and optional `repeat`.
 
-### [ ] 5. Interface, browser run, docs, release
+### [x] 5. Interface, browser run, docs, release
 - Settings sections (Phone, Folders, Home city), reminders list, phone icon on
   Telegram conversations.
 - Extend `tests/e2e/run_e2e.py`; look at the screenshots.
@@ -209,7 +209,7 @@ brain and the browser run can exercise them.
   `CHANGELOG.md`, the status table in `docs/ROADMAP.md`, `docs/DECISIONS.md`
   (D24 Telegram, D25 ddgs, D26 Open-Meteo, D27 pypdf), `README.md`,
   `.env.example`, and this file.
-- Mark the pull request ready; tell Jack to merge it, run `update.bat`, and what to try.
+- Open or update the pull request; tell Jack to merge it, run `update.bat`, and what to try.
 
 ### After 2.1
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
