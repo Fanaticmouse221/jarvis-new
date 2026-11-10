@@ -224,6 +224,19 @@ def test_todo_api_edits_fields(client):
     assert client.patch(f"/api/todos/{todo_id}", json={"title": ""}).status_code == 422
 
 
+def test_plan_api_creates_and_lists_steps(client):
+    created = client.post(
+        "/api/plans",
+        json={"title": "Revise chemistry", "steps": ["Review notes", "Do questions"]},
+    )
+    assert created.status_code == 200
+    assert [step["title"] for step in created.json()["steps"]] == ["Review notes", "Do questions"]
+    listed = client.get("/api/plans").json()
+    assert listed[0]["title"] == "Revise chemistry"
+    assert client.get("/api/plans?status=completed").json() == []
+    assert client.post("/api/plans", json={"title": "Empty", "steps": []}).status_code == 422
+
+
 def test_adding_a_key_verifies_it_saves_it_and_selects_models(tmp_path, monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     runtime = Runtime(make_settings(tmp_path, "groq:openai/gpt-oss-120b,groq:llama-3.1-8b-instant"), launcher=FakeLauncher())

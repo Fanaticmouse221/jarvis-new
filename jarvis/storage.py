@@ -128,6 +128,30 @@ MIGRATIONS: list[str] = [
     ALTER TABLE todos ADD COLUMN due_at TEXT;
     CREATE INDEX idx_todos_due ON todos(status, due_at);
     """,
+    # v6: durable multi-step plans
+    """
+    CREATE TABLE plans (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        title            TEXT NOT NULL,
+        status           TEXT NOT NULL DEFAULT 'active'
+                         CHECK (status IN ('active', 'completed', 'cancelled')),
+        conversation_id  TEXT REFERENCES conversations(id) ON DELETE SET NULL,
+        created_at       TEXT NOT NULL,
+        updated_at       TEXT NOT NULL
+    );
+    CREATE TABLE plan_steps (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        plan_id     INTEGER NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+        position    INTEGER NOT NULL,
+        title       TEXT NOT NULL,
+        status      TEXT NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'completed')),
+        completed_at TEXT,
+        UNIQUE (plan_id, position)
+    );
+    CREATE INDEX idx_plans_status_updated ON plans(status, updated_at DESC);
+    CREATE INDEX idx_plan_steps_plan_position ON plan_steps(plan_id, position);
+    """,
 ]
 
 FTS_SETUP = """
@@ -641,6 +665,71 @@ class Store:
                 return None
             conn.execute("DELETE FROM todos WHERE id = ?", (todo_id,))
         return dict(row)
+
+    # ----- durable plans -------------------------------------------------
+
+    def create_plan(
+        self,
+        title: str,
+        steps: list[str],
+        conversation_id: str | None = None,
+    ) -> dict[str, Any]:
+        title = title.strip()
+        cleaned = [step.strip() for step in steps]
+        if not title:
+            raise ValueError("A plan needs a title.")
+        if len(title) > 500:
+            raise ValueError("Plan titles are limited to 500 characters.")
+        if not cleaned or any(not step for step in cleaned):
+            raise ValueError("A plan needs at least one non-empty step.")
+        if len(cleaned) > 50:
+            raise ValueError("Plans are limited to 50 steps.")
+        if any(len(step) > 500 for step in cleaned):
+            raise ValueError("Plan steps are limited to 500 characters.")
+        now = utc_now()
+        with self._connect() as conn:
+            cursor = conn.execute(
+                "INSERT INTO plans (title, conversation_id, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                (title, conversation_id, now, now),
+            )
+            plan_id = int(cursor.lastrowid)
+            conn.executemany(
+                "INSERT INTO plan_steps (plan_id, position, title) VALUES (?, ?, ?)",
+                [(plan_id, position, step) for position, step in enumerate(cleaned, start=1)],
+            )
+            row = conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+            step_rows = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? ORDER BY position", (plan_id,)
+            ).fetchall()
+        plan = dict(row)
+        plan["steps"] = [dict(step) for step in step_rows]
+        return plan
+
+    def list_plans(self, status: str = "active") -> list[dict[str, Any]]:
+        if status not in ("active", "completed", "cancelled", "all"):
+            raise ValueError("Unknown plan status.")
+        where = "" if status == "all" else "WHERE status = ? "
+        params: tuple[Any, ...] = () if status == "all" else (status,)
+        with self._connect() as conn:
+            plans = conn.execute(
+                "SELECT * FROM plans " + where + "ORDER BY updated_at DESC, id DESC LIMIT 100",
+                params,
+            ).fetchall()
+            step_params: tuple[Any, ...] = () if status == "all" else (status,)
+            steps = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id IN "
+                "(SELECT id FROM plans " + where + ") ORDER BY plan_id, position",
+                step_params,
+            ).fetchall()
+        grouped: dict[int, list[dict[str, Any]]] = {}
+        for step in steps:
+            grouped.setdefault(int(step["plan_id"]), []).append(dict(step))
+        result = []
+        for plan in plans:
+            item = dict(plan)
+            item["steps"] = grouped.get(int(plan["id"]), [])
+            result.append(item)
+        return result
 
     # ----- usage ---------------------------------------------------------
 

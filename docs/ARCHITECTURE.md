@@ -133,6 +133,7 @@ logging and the interface come for free.
 | `settings` | preferences changed in the app |
 | `tool_runs` | the action log |
 | `todos` | durable pending and completed to-dos, with optional UTC due dates |
+| `plans` / `plan_steps` | durable multi-step plans and ordered step state |
 | `usage` | requests and tokens per model per day |
 
 Schema changes are numbered migrations (`PRAGMA user_version`); a v0.1 database
@@ -144,7 +145,7 @@ upgrades in place.
 |---|---|---|
 | 2.2 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
 | 2.3 Tasks | to-dos and more file actions | task state, approval-aware tools |
-| 3.0 | longer multi-step work that survives restarts | task state in `agent.py` |
+| 3.0 | longer multi-step work that survives restarts | plan state in SQLite and resumable agent work |
 
 ## Voice
 

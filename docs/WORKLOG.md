@@ -6,6 +6,21 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Durable plan foundation
+
+**Done:** added schema migration v6 with durable `plans` and `plan_steps`
+tables, validation and ordered storage. JARVIS can create and list plans through
+the agent tools and protected API routes.
+
+**Verified:** focused plan/storage tests passed **15 tests**, Python syntax
+checks passed, and `git diff --check` passed.
+
+**Unverified:** step execution, completion controls, interface rendering and
+live-model plan phrasing are not implemented yet.
+
+**Next:** run the full suite and browser regression, then add safe step
+completion and resume state.
+
 ## 10 Nov 2026 · GitHub Copilot · To-do API edit parity
 
 **Done:** extended `PATCH /api/todos/{id}` so direct API clients can change a

@@ -88,6 +88,11 @@ class TodoCreate(BaseModel):
     due_at: str | None = Field(default=None, max_length=40)
 
 
+class PlanCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    steps: list[str] = Field(min_length=1, max_length=50)
+
+
 class MemoryCreate(BaseModel):
     content: str
     kind: str = "note"
@@ -411,6 +416,20 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
     def create_todo(body: TodoCreate) -> dict[str, Any]:
         try:
             return rt.store.create_todo(body.title, body.details, due_at=body.due_at)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @api.get("/plans")
+    def list_plans(status: str = "active") -> list[dict[str, Any]]:
+        try:
+            return rt.store.list_plans(status)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @api.post("/plans")
+    def create_plan(body: PlanCreate) -> dict[str, Any]:
+        try:
+            return rt.store.create_plan(body.title, body.steps)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 
