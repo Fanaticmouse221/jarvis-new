@@ -106,6 +106,7 @@ export async function renderTodos(page) {
       h("div", { class: "row-text" },
         h("strong", { text: plan.title, class: plan.status === "completed" ? "todo-done" : "" }),
         h("span", { text: `${plan.status[0].toUpperCase()}${plan.status.slice(1)} plan` }),
+        plan.running_step && h("span", { text: `In progress: ${plan.running_step.position}. ${plan.running_step.title}` }),
         plan.next_step && h("span", { text: `Next: ${plan.next_step.position}. ${plan.next_step.title}` }),
         ...stepRows,
       ),

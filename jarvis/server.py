@@ -466,6 +466,33 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
             raise HTTPException(404, "Plan step not found.")
         return plan
 
+    @api.post("/plans/{plan_id}/steps/claim")
+    def claim_plan_step(plan_id: int) -> dict[str, Any]:
+        try:
+            plan = rt.store.claim_plan_step(plan_id)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if plan is None:
+            raise HTTPException(404, "Plan not found.")
+        return plan
+
+    @api.post("/plans/{plan_id}/steps/{position}/finish")
+    async def finish_plan_step(plan_id: int, position: int, request: Request) -> dict[str, Any]:
+        body = await request.json()
+        if not isinstance(body.get("token"), str) or not body["token"]:
+            raise HTTPException(422, "An execution token is required.")
+        if not isinstance(body.get("success"), bool):
+            raise HTTPException(422, "Success must be true or false.")
+        try:
+            plan = rt.store.finish_plan_step(
+                plan_id, position, body["token"], success=body["success"], error=body.get("error")
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if plan is None:
+            raise HTTPException(404, "Plan step not found.")
+        return plan
+
     @api.patch("/todos/{todo_id}")
     async def update_todo(todo_id: int, request: Request) -> dict[str, Any]:
         body = await request.json()

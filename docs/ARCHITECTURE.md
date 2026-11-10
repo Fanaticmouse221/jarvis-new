@@ -96,7 +96,8 @@ Current tools: `remember`, `recall`, `forget`, `search_conversations`,
 `open_app`, `close_app`, `open_url`, `get_system_info`, `list_files`,
 `read_file`, `write_file`, `open_file`, `move_file`, `delete_file`, and the
 task tools `add_todo`, `list_todos`, `change_todo`, `edit_todo`, `delete_todo`,
-`create_plan`, `list_plans`, `change_plan_step`, and `resume_plan`. File reads are marked as
+`create_plan`, `list_plans`, `change_plan_step`, `resume_plan`, `begin_plan_step`,
+and `complete_plan_step`. File reads are marked as
 untrusted output; sensitive app/file mutations always require approval. Adding
 one means writing a handler and a `Tool(...)` entry; permissions, approvals,
 logging and the interface come for free.
@@ -134,7 +135,7 @@ logging and the interface come for free.
 | `settings` | preferences changed in the app |
 | `tool_runs` | the action log |
 | `todos` | durable pending and completed to-dos, with optional UTC due dates |
-| `plans` / `plan_steps` | durable multi-step plans and ordered step state |
+| `plans` / `plan_steps` | durable multi-step plans, ordered step state and execution checkpoints |
 | `usage` | requests and tokens per model per day |
 
 Schema changes are numbered migrations (`PRAGMA user_version`); a v0.1 database
@@ -146,7 +147,7 @@ upgrades in place.
 |---|---|---|
 | 2.2 Voice | microphone capture, speech-to-text endpoint, spoken replies | new `voice.py`, one route, interface |
 | 2.3 Tasks | to-dos and more file actions | task state, approval-aware tools |
-| 3.0 | longer multi-step work that survives restarts | plan state in SQLite and resumable agent work |
+| 3.0 | longer multi-step work that survives restarts | plan state, execution checkpoints and resumable agent work |
 
 ## Voice
 

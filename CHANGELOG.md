@@ -36,6 +36,8 @@
 - JARVIS can inspect a plan and report its next pending step after a restart.
 - Plans can be cancelled and reopened without losing their step history.
 - Plan listings now show the next pending step when one exists.
+- Plan steps now have restart-safe execution checkpoints: interrupted attempts can
+  be reclaimed, completed with a token, or recorded as failed for retry.
 - `start.bat` now updates JARVIS automatically before launching it.
 
 ## 2.1.0 (2026-11-10): Reach

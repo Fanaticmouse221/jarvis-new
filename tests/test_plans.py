@@ -8,6 +8,7 @@ import pytest
 from jarvis.tools.base import ToolContext
 from jarvis.llm.base import ChatMessage
 from jarvis.llm.fake import scripted_reply
+from jarvis.runtime import Runtime
 from tests.conftest import call, run_turn, scripted_runtime, text
 
 
@@ -31,6 +32,32 @@ def test_plan_storage_survives_listing(runtime):
     assert cancelled["status"] == "cancelled"
     reopened = runtime.store.update_plan_status(plan["id"], "active")
     assert reopened["status"] == "active"
+
+
+def test_plan_step_execution_is_reclaimable_after_restart(runtime, settings):
+    plan = runtime.store.create_plan("Ship release", ["Run checks", "Publish build"])
+    claimed = runtime.store.claim_plan_step(plan["id"])
+    assert claimed["next_step"]["execution_status"] == "running"
+    assert claimed["next_step"]["execution_attempts"] == 1
+    token = claimed["execution_token"]
+
+    restarted = Runtime(settings, launcher=runtime.launcher)
+    resumed = restarted.store.get_plan(plan["id"])
+    assert resumed["running_step"]["position"] == 1
+    reclaimed = restarted.store.claim_plan_step(plan["id"])
+    assert reclaimed["execution_token"] != token
+    assert reclaimed["next_step"]["execution_attempts"] == 2
+
+    failed = restarted.store.finish_plan_step(
+        plan["id"], 1, reclaimed["execution_token"], success=False, error="Checks failed"
+    )
+    assert failed["next_step"]["execution_status"] == "failed"
+    finished = restarted.store.claim_plan_step(plan["id"])
+    completed = restarted.store.finish_plan_step(
+        plan["id"], 1, finished["execution_token"], success=True
+    )
+    assert completed["next_step"]["position"] == 2
+    assert completed["running_step"] is None
 
 
 def test_plan_storage_validates_steps(runtime):
@@ -77,6 +104,11 @@ def test_fake_model_understands_plan_phrasing():
         [{"function": {"name": "resume_plan"}}],
     )
     assert calls[0].name == "resume_plan"
+    reply, calls = scripted_reply(
+        [ChatMessage("user", "begin plan 1")],
+        [{"function": {"name": "begin_plan_step"}}],
+    )
+    assert calls[0].name == "begin_plan_step"
     reply, calls = scripted_reply(
         [ChatMessage("user", "cancel plan 1")],
         [{"function": {"name": "change_plan_status"}}],

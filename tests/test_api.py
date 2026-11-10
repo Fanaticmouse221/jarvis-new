@@ -246,6 +246,31 @@ def test_plan_api_creates_and_lists_steps(client):
     assert client.patch(f"/api/plans/{created.json()['id']}/steps/9", json={"status": "completed"}).status_code == 404
 
 
+def test_plan_api_checkpoints_and_reclaims_step(client):
+    created = client.post("/api/plans", json={"title": "Release", "steps": ["Run checks"]}).json()
+    plan_id = created["id"]
+    claimed = client.post(f"/api/plans/{plan_id}/steps/claim")
+    assert claimed.status_code == 200
+    assert claimed.json()["running_step"]["execution_status"] == "running"
+    token = claimed.json()["execution_token"]
+    detail = client.get(f"/api/plans/{plan_id}").json()
+    assert detail["running_step"]["position"] == 1
+
+    reclaimed = client.post(f"/api/plans/{plan_id}/steps/claim").json()
+    assert reclaimed["execution_token"] != token
+    assert reclaimed["next_step"]["execution_attempts"] == 2
+    finished = client.post(
+        f"/api/plans/{plan_id}/steps/1/finish",
+        json={"token": reclaimed["execution_token"], "success": True},
+    )
+    assert finished.status_code == 200
+    assert finished.json()["status"] == "completed"
+    assert client.post(
+        f"/api/plans/{plan_id}/steps/1/finish",
+        json={"token": token, "success": True},
+    ).status_code == 422
+
+
 def test_adding_a_key_verifies_it_saves_it_and_selects_models(tmp_path, monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     runtime = Runtime(make_settings(tmp_path, "groq:openai/gpt-oss-120b,groq:llama-3.1-8b-instant"), launcher=FakeLauncher())

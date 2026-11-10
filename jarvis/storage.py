@@ -152,6 +152,16 @@ MIGRATIONS: list[str] = [
     CREATE INDEX idx_plans_status_updated ON plans(status, updated_at DESC);
     CREATE INDEX idx_plan_steps_plan_position ON plan_steps(plan_id, position);
     """,
+    # v7: restart-safe plan execution checkpoints
+    """
+    ALTER TABLE plan_steps ADD COLUMN execution_status TEXT NOT NULL DEFAULT 'idle'
+        CHECK (execution_status IN ('idle', 'running', 'failed'));
+    ALTER TABLE plan_steps ADD COLUMN execution_token TEXT;
+    ALTER TABLE plan_steps ADD COLUMN execution_started_at TEXT;
+    ALTER TABLE plan_steps ADD COLUMN execution_error TEXT;
+    ALTER TABLE plan_steps ADD COLUMN execution_attempts INTEGER NOT NULL DEFAULT 0;
+    CREATE INDEX idx_plan_steps_execution ON plan_steps(plan_id, execution_status, position);
+    """,
 ]
 
 FTS_SETUP = """
@@ -731,6 +741,9 @@ class Store:
             item["next_step"] = next(
                 (step for step in item["steps"] if step["status"] == "pending"), None
             )
+            item["running_step"] = next(
+                (step for step in item["steps"] if step["execution_status"] == "running"), None
+            )
             result.append(item)
         return result
 
@@ -745,7 +758,84 @@ class Store:
         result = dict(plan)
         result["steps"] = [dict(step) for step in steps]
         result["next_step"] = next((dict(step) for step in steps if step["status"] == "pending"), None)
+        result["running_step"] = next(
+            (dict(step) for step in steps if step["execution_status"] == "running"), None
+        )
         return result
+
+    def claim_plan_step(self, plan_id: int) -> dict[str, Any] | None:
+        """Claim the next unfinished step, reclaiming an interrupted attempt."""
+        token = uuid.uuid4().hex
+        now = utc_now()
+        found_step = False
+        with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            plan = conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+            if plan is None:
+                return None
+            if plan["status"] != "active":
+                raise ValueError("Only active plans can be executed.")
+            step = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? AND status = 'pending' "
+                "ORDER BY CASE WHEN execution_status = 'running' THEN 0 ELSE 1 END, position LIMIT 1",
+                (plan_id,),
+            ).fetchone()
+            if step is None:
+                found_step = False
+            else:
+                found_step = True
+                conn.execute(
+                    "UPDATE plan_steps SET execution_status = 'running', execution_token = ?, "
+                    "execution_started_at = ?, execution_error = NULL, execution_attempts = execution_attempts + 1 "
+                    "WHERE id = ?",
+                    (token, now, step["id"]),
+                )
+                conn.execute("UPDATE plans SET updated_at = ? WHERE id = ?", (now, plan_id))
+        if not found_step:
+            return self.get_plan(plan_id)
+        result = self.get_plan(plan_id)
+        if result is not None:
+            result["execution_token"] = token
+        return result
+
+    def finish_plan_step(
+        self, plan_id: int, position: int, token: str, *, success: bool, error: str | None = None
+    ) -> dict[str, Any] | None:
+        if not token:
+            raise ValueError("An execution token is required.")
+        now = utc_now()
+        with self._connect() as conn:
+            step = conn.execute(
+                "SELECT * FROM plan_steps WHERE plan_id = ? AND position = ?",
+                (plan_id, position),
+            ).fetchone()
+            if step is None:
+                return None
+            if step["execution_token"] != token or step["execution_status"] != "running":
+                raise ValueError("That plan step execution is no longer active.")
+            if success:
+                conn.execute(
+                    "UPDATE plan_steps SET status = 'completed', completed_at = ?, execution_status = 'idle', "
+                    "execution_token = NULL, execution_started_at = NULL, execution_error = NULL WHERE id = ?",
+                    (now, step["id"]),
+                )
+                plan_status = conn.execute(
+                    "SELECT CASE WHEN COUNT(*) = SUM(status = 'completed') "
+                    "THEN 'completed' ELSE 'active' END FROM plan_steps WHERE plan_id = ?",
+                    (plan_id,),
+                ).fetchone()[0]
+            else:
+                conn.execute(
+                    "UPDATE plan_steps SET execution_status = 'failed', execution_token = NULL, "
+                    "execution_error = ? WHERE id = ?",
+                    ((error or "The step failed.")[:1000], step["id"]),
+                )
+                plan_status = "active"
+            conn.execute(
+                "UPDATE plans SET status = ?, updated_at = ? WHERE id = ?",
+                (plan_status, now, plan_id),
+            )
+        return self.get_plan(plan_id)
 
     def update_plan_status(self, plan_id: int, status: str) -> dict[str, Any] | None:
         if status not in ("active", "cancelled"):
@@ -779,7 +869,8 @@ class Store:
             if step is None:
                 return None
             conn.execute(
-                "UPDATE plan_steps SET status = ?, completed_at = ? WHERE id = ?",
+                "UPDATE plan_steps SET status = ?, completed_at = ?, execution_status = 'idle', "
+                "execution_token = NULL, execution_started_at = NULL, execution_error = NULL WHERE id = ?",
                 (status, now if status == "completed" else None, step["id"]),
             )
             plan_status = conn.execute(
