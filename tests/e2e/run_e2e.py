@@ -196,6 +196,7 @@ def main() -> None:
             page.click("button:has-text('Create plan')")
             page.locator(".plan-row", has_text="Chemistry revision plan").wait_for()
             check("Review notes" in page.inner_text(".plan-row"), "a durable plan is created")
+            check("Next: 1. Review notes" in page.inner_text(".plan-row"), "the next plan step is visible")
             page.locator(".plan-row", has_text="Chemistry revision plan").get_by_role("button", name="Complete plan step 1").click()
             page.locator(".plan-row", has_text="✓ 1. Review notes").wait_for()
             check("✓ 1. Review notes" in page.inner_text(".plan-row"), "a plan step can be completed")

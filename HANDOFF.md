@@ -87,8 +87,8 @@ the repository from GitHub, so make sure the other AI's work was pushed (step 4)
 | Released | **v2.1.0** merged to `main` via [PR #5](https://github.com/Fanaticmouse221/jarvis/pull/5) |
 | Confirmed on Jack's PC | `setup.bat` ran, JARVIS started and replied; Jack: "that works good". He has not yet reported on memory after a restart, app opening, or tone. |
 | Working branch | **`fanaticmouse221-continue-jarvis-development`**, from current `main`. |
-| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #17](https://github.com/Fanaticmouse221/jarvis/pull/17). 3.0 durable plans, step state, visible controls and resume lookup are implemented locally after merged PR #20. |
-| Tests | `uv run pytest -q`: **193 passed**. The browser regression is **67 checks passed**, including plan cancellation and reopening. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
+| On that branch so far | 2.2 voice controls merged via [PR #6](https://github.com/Fanaticmouse221/jarvis/pull/6); 2.3 durable editable to-dos with due dates and deletion, approved computer/file actions, safer process matching, automatic update-before-start, and API edit parity are merged through [PR #17](https://github.com/Fanaticmouse221/jarvis/pull/17). 3.0 durable plans, step state, visible controls, resume lookup, cancellation and reopening are merged through [PR #22](https://github.com/Fanaticmouse221/jarvis/pull/22). |
+| Tests | `uv run pytest -q`: **193 passed** before the current next-step visibility slice. The browser regression is **67 checks passed** before its new next-step assertion. Live Groq Whisper, microphone permission, speech quality, live-model task phrasing and real Windows close/move/delete behaviour remain unverified. |
 
 What exists in 2.0 and later (all in `docs/ROADMAP.md` with evidence): streaming chat,
 long-term memory (told + learned automatically, survives restart, management
@@ -247,8 +247,8 @@ brain and the browser run can exercise them.
    unverified here.
 2. Verify the `start.bat` update-then-start flow on Jack's Windows PC after
    pulling the merged changes.
-3. Begin the smallest 3.0 foundation slice: durable, visible multi-step plans
-   that can resume after a restart without weakening memory, personality or
+3. Continue 3.0 with resumable plan execution only after the current persisted
+   next-step state is visible and tested; preserve memory, personality and
    approval guarantees.
 - **2.2 Voice:** microphone button, Groq Whisper speech-to-text (free: 20
   requests/min, 2,000/day), spoken replies with Edge's natural British voices,
