@@ -6,6 +6,22 @@ Releases are summarised in `CHANGELOG.md`; the plan lives in `HANDOFF.md`.
 
 ---
 
+## 10 Nov 2026 · GitHub Copilot · Automatic update before start
+
+**Done:** changed `start.bat` to call `update.bat /silent` before checking
+dependencies and launching JARVIS. The updater now returns cleanly without
+pausing when called with `/silent`, while direct double-click use keeps its
+existing pause and completion message. A failed update stops the launch.
+
+**Verified:** the batch-file changes were inspected for `call`/`errorlevel`
+control flow, and the full Python suite passed **185 tests**. The browser
+regression remains at **62 checks** from the preceding verified slice.
+
+**Unverified:** actual `git pull`, `uv sync` and the resulting server launch
+need to be exercised on Jack's Windows PC.
+
+**Next:** commit and merge this startup-flow change, then verify it on Windows.
+
 ## 10 Nov 2026 · GitHub Copilot · To-do due dates
 
 **Done:** added optional ISO due dates to durable to-dos. SQLite migration v5

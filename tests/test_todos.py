@@ -16,6 +16,9 @@ def test_todo_storage_and_status_changes(runtime):
     assert runtime.store.update_todo_status(first["id"], "pending")["completed_at"] is None
     with pytest.raises(ValueError, match="valid ISO"):
         runtime.store.create_todo("Bad date", due_at="tomorrow")
+    deleted = runtime.store.delete_todo(second["id"])
+    assert deleted["title"] == "Read the docs"
+    assert [item["title"] for item in runtime.store.list_todos("all")] == ["Buy milk"]
 
 
 def test_todo_tools_use_normal_agent_path(settings):
@@ -32,3 +35,8 @@ def test_todo_tools_use_normal_agent_path(settings):
     todos = runtime.store.list_todos("all")
     assert todos[0]["status"] == "completed"
     assert len(provider.calls) == 6
+
+
+def test_delete_todo_is_sensitive(runtime):
+    tool = runtime.registry.get("delete_todo")
+    assert tool.risk == "sensitive"

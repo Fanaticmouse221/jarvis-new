@@ -176,6 +176,9 @@ def scripted_reply(messages: list[ChatMessage], tools: list[dict[str, Any]] | No
     match = re.fullmatch(r"reopen to-?do #?(\d+)", lower)
     if match:
         return use("change_todo", id=int(match.group(1)), status="pending")
+    match = re.fullmatch(r"(?:delete|remove) to-?do #?(\d+)", lower)
+    if match:
+        return use("delete_todo", id=int(match.group(1)))
     match = re.fullmatch(r"(?:please )?(?:close|quit|exit) (.+?)[.!]?$", text, re.I)
     if match:
         return use("close_app", name=match.group(1).strip())

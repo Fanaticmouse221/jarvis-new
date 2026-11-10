@@ -49,7 +49,8 @@ You need **Git** and an internet connection.
 2. Double-click **`setup.bat`**. It installs [uv](https://docs.astral.sh/uv/)
    if needed, a private copy of Python 3.12 and the dependencies, runs the
    self-tests and puts a **JARVIS** shortcut on your desktop.
-3. Double-click **JARVIS** on the desktop (or `start.bat`). A window opens.
+3. Double-click **JARVIS** on the desktop (or `start.bat`). It updates JARVIS
+   first, then opens the window.
 4. The first screen asks for a free Groq key. Create one at
    [console.groq.com/keys](https://console.groq.com/keys) (no payment details),
    paste it in, and press Connect. JARVIS checks it and picks the models your
